@@ -2,51 +2,92 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WARRICK WALLET | POWERED BY ARVIN</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WARRICK WALLET | GLOBAL CLOUD SYNC</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React & Babel for Browser Execution -->
+    <!-- React & Babel -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- PDF Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --ios-bg: #f2f2f7; }
+        :root { --ios-bg: #e0e5ec; }
         body {
             font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
             -webkit-font-smoothing: antialiased;
             background-color: var(--ios-bg);
-            color: #1c1c1e;
+            color: #444;
             overflow-x: hidden;
+            touch-action: manipulation;
         }
-        .ios-glass {
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(25px) saturate(190%);
-            -webkit-backdrop-filter: blur(25px) saturate(190%);
+
+        .neumorphic-card {
+            background: #e0e5ec;
+            border-radius: 50px;
+            box-shadow: 20px 20px 60px #bec3c9, -20px -20px 60px #ffffff;
         }
-        .ios-widget {
-            transition: transform 0.4s cubic-bezier(0.15, 0, 0.2, 1), box-shadow 0.4s ease;
-            border-radius: 2.2rem;
+        .neumorphic-input {
+            background: #e0e5ec;
+            border-radius: 25px;
+            box-shadow: inset 6px 6px 12px #bec3c9, inset -6px -6px 12px #ffffff;
+            border: none;
+            outline: none;
+            padding: 12px 25px;
+            width: 100%;
+            color: #444;
+            transition: all 0.2s ease;
         }
-        .ios-widget:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.04); }
+        .neumorphic-button {
+            background: #777; 
+            border-radius: 25px;
+            box-shadow: 6px 6px 12px #bec3c9, -6px -6px 12px #ffffff;
+            color: white;
+            transition: all 0.2s ease;
+        }
+        .neumorphic-button:active {
+            box-shadow: inset 4px 4px 8px #555, inset -4px -4px 8px #999;
+            transform: scale(0.98);
+        }
+        .neumorphic-circle {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #e0e5ec;
+            border-radius: 50%;
+            box-shadow: 6px 6px 12px #bec3c9, -6px -6px 12px #ffffff;
+            font-weight: bold;
+            color: #333;
+            transition: all 0.2s ease;
+        }
+        .neumorphic-checkbox {
+            width: 24px; height: 24px; background: #e0e5ec; border-radius: 6px;
+            box-shadow: 3px 3px 6px #bec3c9, -3px -3px 6px #ffffff;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+        }
+
+        .ios-glass { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(25px) saturate(190%); }
+        .ios-widget { transition: transform 0.4s cubic-bezier(0.15, 0, 0.2, 1), box-shadow 0.4s ease; border-radius: 2.2rem; }
+        @media (max-width: 768px) { .ios-widget { border-radius: 1.5rem; } }
         .ios-button { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; border: none; outline: none; }
         .ios-button:active { transform: scale(0.96); opacity: 0.8; }
         
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-ios { animation: fadeIn 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
         
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.1); border-radius: 10px; }
         .loading-spinner {
-            border: 3px solid rgba(0,0,0,0.1);
-            border-top: 3px solid #2563eb;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
+            border: 3px solid rgba(0,0,0,0.1); border-top: 3px solid #2563eb;
+            border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
     </style>
 <script type="importmap">
 {
@@ -67,10 +108,23 @@
         const TransactionType = { INCOME: 'INCOME', EXPENSE: 'EXPENSE', ALL: 'ALL' };
         const UserRole = { ADMIN: 'ADMIN', USER: 'USER' };
 
-        // GLOBAL SYNC ENGINE (Virtual Backend)
+        const runMigration = () => {
+            const legacyUsers = localStorage.getItem('WARRICK_USERS'); 
+            const currentUsers = localStorage.getItem('GLOBAL_WARRICK_USERS');
+            if (legacyUsers && !currentUsers) {
+                localStorage.setItem('GLOBAL_WARRICK_USERS', legacyUsers);
+            }
+            const keys = Object.keys(localStorage);
+            keys.forEach(key => {
+                if (key.startsWith('TX_') && !key.startsWith('GLOBAL_TX_')) {
+                    const data = localStorage.getItem(key);
+                    localStorage.setItem('GLOBAL_' + key, data);
+                }
+            });
+        };
+
         const CloudSync = {
             async getAllUsers() {
-                await new Promise(r => setTimeout(r, 600)); 
                 return JSON.parse(localStorage.getItem('GLOBAL_WARRICK_USERS') || '[]');
             },
             async saveUser(user) {
@@ -80,7 +134,6 @@
                 return user;
             },
             async getTransactions(userId) {
-                await new Promise(r => setTimeout(r, 400));
                 return JSON.parse(localStorage.getItem(`GLOBAL_TX_${userId}`) || '[]');
             },
             async syncTransactions(userId, txs) {
@@ -98,12 +151,10 @@
                 }
             };
             return (
-                <div className={`ios-widget p-7 ios-glass ${getStyle()} flex flex-col justify-between h-40 shadow-2xl animate-ios`}>
-                    <div className="flex justify-between items-start">
-                        <p className={`text-[11px] font-black uppercase tracking-widest ${type === 'balance' ? 'text-blue-100' : 'text-slate-400'}`}>{label}</p>
-                    </div>
-                    <h2 className="text-3xl font-extrabold tabular-nums tracking-tighter leading-none">
-                        <span className="text-xl mr-1 font-medium opacity-70">{currencySymbol}</span>
+                <div className={`ios-widget p-6 md:p-7 ios-glass ${getStyle()} flex flex-col justify-between h-36 md:h-40 shadow-2xl animate-ios`}>
+                    <p className={`text-[10px] md:text-[11px] font-black uppercase tracking-widest ${type === 'balance' ? 'text-blue-100' : 'text-slate-400'}`}>{label}</p>
+                    <h2 className="text-2xl md:text-3xl font-extrabold tabular-nums tracking-tighter leading-none">
+                        <span className="text-lg md:text-xl mr-1 font-medium opacity-70">{currencySymbol}</span>
                         {amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </h2>
                 </div>
@@ -113,32 +164,24 @@
         const App = () => {
             const [view, setView] = useState('signin');
             const [currentUser, setCurrentUser] = useState(null);
-            const [allUsers, setAllUsers] = useState([]);
             const [transactions, setTransactions] = useState([]);
             const [filterType, setFilterType] = useState(TransactionType.ALL);
-            const [authError, setAuthError] = useState('');
-            const [isLoading, setIsLoading] = useState(false);
             const [entryType, setEntryType] = useState(TransactionType.EXPENSE);
-
-            const historyRef = useRef(null);
-            const formRef = useRef(null);
+            const [isLoading, setIsLoading] = useState(false);
+            const [authError, setAuthError] = useState('');
+            const fileInputRef = useRef(null);
 
             useEffect(() => {
+                runMigration();
                 const session = JSON.parse(localStorage.getItem('W_SESSION'));
                 if (session) loadUserData(session);
-                refreshGlobalUsers();
             }, []);
-
-            const refreshGlobalUsers = async () => {
-                const users = await CloudSync.getAllUsers();
-                setAllUsers(users);
-            };
 
             const loadUserData = async (user) => {
                 setIsLoading(true);
                 const txs = await CloudSync.getTransactions(user.username || user.email);
-                setCurrentUser(user);
                 setTransactions(txs);
+                setCurrentUser(user);
                 setView('dashboard');
                 setIsLoading(false);
             };
@@ -150,29 +193,26 @@
                 const fd = new FormData(e.target);
                 const login = fd.get('login');
                 const pass = fd.get('pass');
-
                 const users = await CloudSync.getAllUsers();
                 const user = users.find(u => (u.email === login || u.mobile === login || u.username === login) && u.pass === pass);
-                
                 if (user) {
                     localStorage.setItem('W_SESSION', JSON.stringify(user));
                     await loadUserData(user);
                 } else {
-                    setAuthError('Account not found or invalid credentials');
+                    setAuthError('Invalid credentials');
                 }
                 setIsLoading(false);
             };
 
-            const handleAdminSignin = async (e) => {
+            const handleAdminSignin = (e) => {
                 e.preventDefault();
                 setIsLoading(true);
                 const id = e.target.adminId.value;
                 const pass = e.target.adminPass.value;
-
                 if (id === 'arvin_hanif' && pass === 'arvin_hanif') {
                     const admin = { name: 'Arvin Hanif', email: 'admin@warrick.io', role: UserRole.ADMIN, username: 'arvin_hanif' };
                     localStorage.setItem('W_SESSION', JSON.stringify(admin));
-                    await loadUserData(admin);
+                    loadUserData(admin);
                 } else {
                     setAuthError('Admin access denied');
                 }
@@ -183,109 +223,126 @@
                 e.preventDefault();
                 setIsLoading(true);
                 const fd = new FormData(e.target);
-                const email = fd.get('email');
-                const users = await CloudSync.getAllUsers();
-                
-                if (users.find(u => u.email === email)) {
-                    setAuthError('User already exists globally');
-                    setIsLoading(false);
-                    return;
-                }
-
                 const newUser = {
                     name: fd.get('name'),
-                    email,
+                    email: fd.get('email'),
+                    username: fd.get('email'),
                     mobile: fd.get('mobile'),
                     pass: fd.get('pass'),
-                    role: UserRole.USER,
-                    username: email
+                    role: UserRole.USER
                 };
-
                 await CloudSync.saveUser(newUser);
                 localStorage.setItem('W_SESSION', JSON.stringify(newUser));
                 await loadUserData(newUser);
-                refreshGlobalUsers();
                 setIsLoading(false);
             };
 
-            const logout = () => {
-                localStorage.removeItem('W_SESSION');
-                setCurrentUser(null);
-                setTransactions([]);
-                setView('signin');
+            const exportToPDF = () => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                doc.setFont("helvetica", "bold");
+                doc.text("WARRICK WALLET REPORT", 14, 20);
+                doc.setFontSize(10);
+                doc.text(`User: ${currentUser.name} | Date: ${new Date().toLocaleString()}`, 14, 28);
+                const tableData = transactions.map(t => [t.date, t.description, t.type, t.amount.toFixed(2)]);
+                doc.autoTable({ startY: 35, head: [['Date', 'Description', 'Type', 'Amount']], body: tableData });
+                const signatureData = btoa(JSON.stringify(transactions));
+                doc.setFontSize(1); doc.setTextColor(250, 250, 250);
+                doc.text(`WARRICK_DATA:${signatureData}`, 14, 290);
+                doc.save(`Warrick_Export_${currentUser.name}.pdf`);
             };
 
-            const addEntry = async (e) => {
-                e.preventDefault();
-                const fd = new FormData(e.target);
-                const amount = parseFloat(fd.get('amt'));
-                const desc = fd.get('desc');
-                if (!amount || !desc) return;
-
-                const newTx = {
-                    id: Date.now().toString(),
-                    description: desc,
-                    amount,
-                    type: entryType,
-                    date: new Date().toLocaleString()
+            const importFromPDF = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                setIsLoading(true);
+                const reader = new FileReader();
+                reader.onload = async function() {
+                    try {
+                        const typedarray = new Uint8Array(this.result);
+                        const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                        let fullText = "";
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const textContent = await page.getTextContent();
+                            fullText += textContent.items.map(item => item.str).join(" ");
+                        }
+                        if (fullText.includes("WARRICK_DATA:")) {
+                            const rawData = fullText.split("WARRICK_DATA:")[1].trim().split(" ")[0];
+                            const importedTxs = JSON.parse(atob(rawData));
+                            const merged = [...importedTxs, ...transactions];
+                            const unique = Array.from(new Map(merged.map(item => [item.id, item])).values());
+                            setTransactions(unique);
+                            await CloudSync.syncTransactions(currentUser.username || currentUser.email, unique);
+                        }
+                    } catch (err) {}
+                    setIsLoading(false);
                 };
-
-                const updated = [newTx, ...transactions];
-                setTransactions(updated);
-                await CloudSync.syncTransactions(currentUser.username || currentUser.email, updated);
-                e.target.reset();
+                reader.readAsArrayBuffer(file);
             };
 
             if (view !== 'dashboard') {
                 return (
-                    <div className="fixed inset-0 flex items-center justify-center p-6 bg-[#f2f2f7]">
-                        <div className="w-full max-w-md space-y-8 text-center animate-ios">
-                            <div>
-                                <h1 className="text-5xl font-extrabold tracking-tighter text-slate-900 leading-none">WARRICK<span className="text-blue-600">.</span></h1>
-                                <p className="text-[11px] font-black text-blue-600 uppercase tracking-[0.5em] mt-3 opacity-80">POWERED BY ARVIN</p>
+                    <div className="fixed inset-0 flex items-center justify-center p-6 bg-[#e0e5ec]">
+                        <div className="w-full max-w-[400px] animate-ios">
+                            <div className="text-center mb-8">
+                                <h1 className="text-4xl font-extrabold tracking-tighter text-slate-800">WARRICK<span className="text-blue-600">.</span></h1>
+                                <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.4em] mt-2 opacity-80">POWERED BY ARVIN</p>
                             </div>
-
-                            <div className="bg-white p-10 rounded-[3rem] shadow-2xl border border-white relative overflow-hidden">
-                                {isLoading && (
-                                    <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
-                                        <div className="loading-spinner mb-4"></div>
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-600">Global Syncing...</p>
-                                    </div>
-                                )}
-
+                            <div className="neumorphic-card p-10 md:p-12">
                                 {view === 'signin' && (
-                                    <form onSubmit={handleSignin} className="space-y-4 text-left">
-                                        <h2 className="text-2xl font-black text-slate-900 mb-6 text-center">User Login</h2>
-                                        <input name="login" required placeholder="Email or Mobile" className="w-full px-6 py-4 bg-slate-50 rounded-2xl outline-none font-bold focus:ring-2 ring-blue-500/10" />
-                                        <input name="pass" required type="password" placeholder="Password" className="w-full px-6 py-4 bg-slate-50 rounded-2xl outline-none font-bold focus:ring-2 ring-blue-500/10" />
+                                    <form onSubmit={handleSignin} className="space-y-6">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-slate-500 ml-4">Username</label>
+                                            <input name="login" required placeholder="Email or Number" className="neumorphic-input font-medium" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-slate-500 ml-4">Password</label>
+                                            <input name="pass" type="password" required placeholder="Enter Password" className="neumorphic-input font-medium" />
+                                        </div>
+                                        <div className="flex items-center justify-between px-2">
+                                            <div className="flex items-center gap-2">
+                                                <div className="neumorphic-checkbox">
+                                                    <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                                </div>
+                                                <span className="text-xs font-bold text-slate-500">Remember me</span>
+                                            </div>
+                                            <button type="button" className="text-xs font-bold text-slate-500 hover:text-slate-800">Forget password?</button>
+                                        </div>
                                         {authError && <p className="text-rose-500 text-[10px] font-bold text-center uppercase tracking-widest">{authError}</p>}
-                                        <button className="w-full py-5 bg-blue-600 text-white font-black rounded-2xl ios-button shadow-xl shadow-blue-600/20 uppercase tracking-widest text-sm">Sign In</button>
-                                        <div className="py-2 flex items-center gap-4 text-slate-200"><div className="flex-grow border-t"></div><span className="text-[10px] font-bold text-slate-300">OR</span><div className="flex-grow border-t"></div></div>
-                                        <button type="button" onClick={() => {setView('admin'); setAuthError('');}} className="w-full py-4 bg-slate-900 text-white font-black rounded-2xl ios-button text-[11px] uppercase tracking-widest">Admin Portal</button>
-                                        <p className="text-center text-sm font-bold text-slate-400 mt-6">New user? <button type="button" onClick={() => setView('signup')} className="text-blue-600 font-black">Register Globally</button></p>
+                                        <button className="w-full py-4 neumorphic-button font-bold text-lg">Sign In</button>
+                                        
+                                        <div className="flex flex-col gap-3 mt-6 text-center border-t border-slate-300 pt-6">
+                                            <button type="button" onClick={() => {setView('admin'); setAuthError('');}} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-600">Admin Portal</button>
+                                            <p className="text-xs font-bold text-slate-500">Don't have an account? <button type="button" onClick={() => setView('signup')} className="text-blue-600">Register</button></p>
+                                        </div>
                                     </form>
                                 )}
-
                                 {view === 'admin' && (
-                                    <form onSubmit={handleAdminSignin} className="space-y-4 text-left">
-                                        <h2 className="text-2xl font-black text-indigo-600 mb-6 text-center">Admin Access</h2>
-                                        <input name="adminId" required placeholder="Admin ID" className="w-full px-6 py-4 bg-slate-50 rounded-2xl outline-none font-bold" />
-                                        <input name="adminPass" required type="password" placeholder="Admin Key" className="w-full px-6 py-4 bg-slate-50 rounded-2xl outline-none font-bold" />
-                                        {authError && <p className="text-rose-500 text-[10px] font-bold text-center uppercase tracking-widest">{authError}</p>}
-                                        <button className="w-full py-5 bg-indigo-600 text-white font-black rounded-2xl ios-button shadow-xl shadow-indigo-600/20 uppercase tracking-widest text-sm">Open Monitor</button>
-                                        <button type="button" onClick={() => setView('signin')} className="w-full text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-4">Back to User Login</button>
+                                    <form onSubmit={handleAdminSignin} className="space-y-6">
+                                        <h2 className="text-xl font-black text-indigo-600 text-center uppercase tracking-widest mb-4">Admin Vault</h2>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-slate-500 ml-4">Admin ID</label>
+                                            <input name="adminId" required placeholder="ID Required" className="neumorphic-input font-medium" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-slate-500 ml-4">Secret Key</label>
+                                            <input name="adminPass" type="password" required placeholder="Enter Secret" className="neumorphic-input font-medium" />
+                                        </div>
+                                        {authError && <p className="text-rose-500 text-[10px] font-bold text-center">{authError}</p>}
+                                        <button className="w-full py-4 neumorphic-button font-bold text-lg bg-indigo-700 text-white">Authorize</button>
+                                        <button type="button" onClick={() => setView('signin')} className="w-full text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Back to User Login</button>
                                     </form>
                                 )}
-
                                 {view === 'signup' && (
-                                    <form onSubmit={handleSignup} className="space-y-4 text-left">
-                                        <h2 className="text-2xl font-black text-blue-600 mb-6 text-center">New Global Account</h2>
-                                        <input name="name" required placeholder="Full Name" className="w-full px-6 py-4 bg-slate-50 rounded-2xl outline-none font-bold" />
-                                        <input name="email" required type="email" placeholder="Email Address" className="w-full px-6 py-4 bg-slate-50 rounded-2xl outline-none font-bold" />
-                                        <input name="mobile" required placeholder="Mobile Number" className="w-full px-6 py-4 bg-slate-50 rounded-2xl outline-none font-bold" />
-                                        <input name="pass" required type="password" placeholder="Set Password" className="w-full px-6 py-4 bg-slate-50 rounded-2xl outline-none font-bold" />
-                                        <button className="w-full py-5 bg-blue-600 text-white font-black rounded-2xl ios-button shadow-xl shadow-blue-600/20 uppercase tracking-widest text-sm">Register</button>
-                                        <button type="button" onClick={() => setView('signin')} className="w-full text-sm font-bold text-slate-400 mt-4 text-center block">Already have account? Login</button>
+                                    <form onSubmit={handleSignup} className="space-y-5">
+                                        <h2 className="text-xl font-black text-blue-600 text-center uppercase tracking-widest mb-4">New User</h2>
+                                        <input name="name" required placeholder="Full Name" className="neumorphic-input" />
+                                        <input name="email" required type="email" placeholder="Email Address" className="neumorphic-input" />
+                                        <input name="mobile" required placeholder="Mobile Number" className="neumorphic-input" />
+                                        <input name="pass" type="password" required placeholder="Password" className="neumorphic-input" />
+                                        <button className="w-full py-4 neumorphic-button font-bold text-lg bg-blue-600 text-white">Sign Up</button>
+                                        <button type="button" onClick={() => setView('signin')} className="w-full text-xs font-bold text-slate-500 mt-4 text-center block">Already a member? Login</button>
                                     </form>
                                 )}
                             </div>
@@ -296,134 +353,94 @@
 
             const incTotal = transactions.filter(t => t.type === TransactionType.INCOME).reduce((a, b) => a + b.amount, 0);
             const expTotal = transactions.filter(t => t.type === TransactionType.EXPENSE).reduce((a, b) => a + b.amount, 0);
-
-            const filteredTransactions = transactions.filter(t => {
-                if (filterType === TransactionType.ALL) return true;
-                return t.type === filterType;
-            });
+            const filteredTxs = transactions.filter(t => filterType === TransactionType.ALL ? true : t.type === filterType);
 
             return (
-                <div className="w-full min-h-screen py-8 px-6 md:px-12 lg:px-20 bg-[#f2f2f7]">
-                    <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] ios-glass p-2 rounded-full border border-white shadow-2xl flex items-center gap-1 backdrop-blur-3xl">
-                        <button onClick={() => { setFilterType(TransactionType.ALL); historyRef.current?.scrollIntoView({ behavior: 'smooth' }); }} className={`px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all ios-button ${filterType === TransactionType.ALL ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:bg-white/50'}`}>History</button>
-                        <button onClick={() => { setFilterType(TransactionType.EXPENSE); historyRef.current?.scrollIntoView({ behavior: 'smooth' }); }} className={`px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all ios-button ${filterType === TransactionType.EXPENSE ? 'bg-rose-500 text-white shadow-lg' : 'text-rose-600 hover:bg-rose-50'}`}>Expenses</button>
-                        <button onClick={() => { setFilterType(TransactionType.INCOME); historyRef.current?.scrollIntoView({ behavior: 'smooth' }); }} className={`px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all ios-button ${filterType === TransactionType.INCOME ? 'bg-emerald-500 text-white shadow-lg' : 'text-emerald-600 hover:bg-emerald-50'}`}>Income</button>
-                    </nav>
-
-                    <header className="max-w-[1200px] mx-auto flex justify-between items-center mb-16 pt-12">
-                        <div>
-                            <h1 className="text-4xl font-extrabold tracking-tighter text-slate-900 leading-none">WARRICK<span className="text-blue-600">.</span></h1>
-                            <p className="text-[11px] font-black text-blue-600 uppercase tracking-[0.4em] opacity-80 mt-1">POWERED BY ARVIN</p>
+                <div className="w-full min-h-screen py-6 px-4 md:px-10 lg:px-20 bg-[#f2f2f7]">
+                    {isLoading && <div className="fixed inset-0 bg-white/60 backdrop-blur-md z-[200] flex items-center justify-center"><div className="loading-spinner"></div></div>}
+                    <div className="max-w-[1200px] mx-auto flex flex-wrap justify-center md:justify-end gap-2 mb-4">
+                        <button onClick={exportToPDF} className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl shadow-sm ios-button text-blue-600 border border-blue-50 text-[10px] font-black uppercase tracking-widest">Export</button>
+                        <button onClick={() => fileInputRef.current.click()} className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl shadow-sm ios-button text-emerald-600 border border-emerald-50 text-[10px] font-black uppercase tracking-widest">Import</button>
+                        <input type="file" ref={fileInputRef} onChange={importFromPDF} accept=".pdf" className="hidden" />
+                        <button onClick={() => {localStorage.removeItem('W_SESSION'); setView('signin');}} className="px-4 py-2 bg-white rounded-xl shadow-sm ios-button text-rose-500 font-black text-[10px] uppercase tracking-widest border border-rose-50">LOGOUT</button>
+                    </div>
+                    <header className="max-w-[1200px] mx-auto mb-8 text-center md:text-left">
+                        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tighter text-slate-800">WARRICK<span className="text-blue-600">.</span></h1>
+                        <div className="mt-2 inline-flex items-center px-4 py-1.5 bg-emerald-100 text-emerald-700 rounded-full border border-emerald-200 shadow-sm">
+                            <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em]">POWERED BY ARVIN</span>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <div className="text-right hidden sm:block">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 leading-none">{currentUser.role}</p>
-                                <p className="text-base font-bold text-slate-900 tracking-tight leading-none">{currentUser.name}</p>
+                        <div className="mt-10 flex justify-center">
+                            <div className="ios-glass p-1.5 rounded-full border border-white shadow-xl flex items-center gap-1">
+                                {['ALL', 'INCOME', 'EXPENSE'].map(f => (
+                                    <button key={f} onClick={() => setFilterType(TransactionType[f])} className={`px-6 py-2.5 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${filterType === TransactionType[f] ? 'bg-white text-blue-600 shadow-md' : 'text-slate-500'}`}>{f === 'ALL' ? 'History' : f.charAt(0) + f.slice(1).toLowerCase()}</button>
+                                ))}
                             </div>
-                            <button onClick={logout} className="p-4 bg-white rounded-full shadow-lg ios-button text-rose-500 font-bold border border-rose-50">LOGOUT</button>
                         </div>
                     </header>
-
-                    <main className="max-w-[1200px] mx-auto space-y-10 animate-ios">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <StatCard label="Total Balance" amount={incTotal - expTotal} type="balance" currencySymbol="৳" />
+                    <main className="max-w-[1200px] mx-auto space-y-6 md:space-y-10 pb-12">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                            <StatCard label="Net Balance" amount={incTotal - expTotal} type="balance" currencySymbol="৳" />
                             <StatCard label="Total Income" amount={incTotal} type="income" currencySymbol="৳" />
                             <StatCard label="Total Expenses" amount={expTotal} type="expense" currencySymbol="৳" />
                         </div>
-
-                        {currentUser.role === UserRole.ADMIN && (
-                            <section className="ios-glass p-10 rounded-[3rem] border border-white shadow-2xl">
-                                <h3 className="text-2xl font-black text-slate-900 mb-8 flex items-center gap-3">
-                                    <span className="w-2 h-6 bg-indigo-600 rounded-full"></span>
-                                    Global User Management
-                                </h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {allUsers.filter(u => u.role !== UserRole.ADMIN).map(u => (
-                                        <div key={u.email} className="p-6 bg-white/60 rounded-[2rem] border border-white shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
-                                            <div>
-                                                <h4 className="font-bold text-slate-800 text-base">{u.name}</h4>
-                                                <p className="text-[11px] text-slate-400 font-bold mb-3">{u.email}</p>
-                                            </div>
-                                            <div className="flex justify-between items-center border-t border-slate-100 pt-3">
-                                                <span className="text-[10px] text-indigo-500 font-black uppercase tracking-widest">{u.mobile}</span>
-                                                <span className="text-[9px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-bold">ACTIVE</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {allUsers.filter(u => u.role !== UserRole.ADMIN).length === 0 && <p className="col-span-full text-center py-6 text-slate-400 font-bold uppercase tracking-widest text-[10px]">No Registered Users Yet</p>}
-                                </div>
-                            </section>
-                        )}
-
-                        <div ref={formRef} className="ios-glass p-10 rounded-[3rem] border border-white shadow-2xl">
-                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-                                <h3 className="text-2xl font-black text-slate-800 flex items-center gap-3">
-                                    <span className={`w-2 h-6 rounded-full ${entryType === TransactionType.INCOME ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
-                                    New Entry
-                                </h3>
-                                {/* Toggle Segmented Control */}
-                                <div className="p-1 bg-slate-100 rounded-2xl flex items-center w-fit">
-                                    <button onClick={() => setEntryType(TransactionType.EXPENSE)} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${entryType === TransactionType.EXPENSE ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-400'}`}>Expense</button>
-                                    <button onClick={() => setEntryType(TransactionType.INCOME)} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${entryType === TransactionType.INCOME ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-400'}`}>Income</button>
+                        <div className="ios-glass p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-white shadow-2xl">
+                             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6 md:mb-8 text-center md:text-left">
+                                <h3 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">New Entry</h3>
+                                <div className="p-1 bg-slate-200/50 rounded-2xl flex border border-white w-full md:w-auto">
+                                    <button onClick={() => setEntryType(TransactionType.EXPENSE)} className={`flex-1 md:flex-none px-6 md:px-8 py-2.5 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest ${entryType === TransactionType.EXPENSE ? 'bg-white text-rose-600 shadow-md' : 'text-slate-400'}`}>Expense</button>
+                                    <button onClick={() => setEntryType(TransactionType.INCOME)} className={`flex-1 md:flex-none px-6 md:px-8 py-2.5 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest ${entryType === TransactionType.INCOME ? 'bg-white text-emerald-600 shadow-md' : 'text-slate-400'}`}>Income</button>
                                 </div>
                              </div>
-
-                             <form onSubmit={addEntry} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <input name="desc" required placeholder="What was this for?" className="px-6 py-4 rounded-2xl bg-white border border-slate-100 outline-none font-bold" />
-                                <input name="amt" type="number" step="0.01" required placeholder="Amount (৳)" className="px-6 py-4 rounded-2xl bg-white border border-slate-100 outline-none font-bold" />
-                                <button className={`text-white font-black rounded-2xl ios-button uppercase tracking-widest text-[10px] shadow-lg transition-all ${entryType === TransactionType.INCOME ? 'bg-emerald-600 shadow-emerald-500/20' : 'bg-blue-600 shadow-blue-500/20'}`}>
-                                    {entryType === TransactionType.INCOME ? 'Add Income' : 'Add Expense'}
-                                </button>
+                             <form onSubmit={async (e) => {
+                                e.preventDefault();
+                                const fd = new FormData(e.target);
+                                const amt = parseFloat(fd.get('amt'));
+                                if(!amt) return;
+                                const newTx = { id: Date.now().toString(), description: fd.get('desc'), amount: amt, type: entryType, date: new Date().toLocaleString() };
+                                const updated = [newTx, ...transactions];
+                                setTransactions(updated);
+                                await CloudSync.syncTransactions(currentUser.username || currentUser.email, updated);
+                                e.target.reset();
+                             }} className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+                                <input name="desc" required placeholder="Memo..." className="px-5 py-4 rounded-2xl bg-white border border-slate-100 outline-none font-bold text-sm" />
+                                <input name="amt" type="number" step="0.01" required placeholder="0.00 (৳)" className="px-5 py-4 rounded-2xl bg-white border border-slate-100 outline-none font-bold text-sm" />
+                                <button className={`py-4 text-white font-black rounded-2xl uppercase tracking-widest text-[10px] shadow-xl ${entryType === TransactionType.INCOME ? 'bg-emerald-600' : 'bg-rose-600'}`}>Confirm {entryType}</button>
                              </form>
                         </div>
-
-                        <div ref={historyRef} className="ios-glass rounded-[3.5rem] border border-white shadow-2xl overflow-hidden scroll-mt-24">
-                            <div className="p-8 border-b border-white/40 flex justify-between items-center bg-white/30">
-                                <div>
-                                    <h3 className="text-xl font-extrabold text-slate-900 tracking-tight leading-none">
-                                        {filterType === TransactionType.ALL ? 'Global History' : filterType === TransactionType.INCOME ? 'Income Log' : 'Expense Log'}
-                                    </h3>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 opacity-70">Filtered view</p>
-                                </div>
-                                <span className="text-[10px] font-black bg-white px-4 py-1.5 rounded-full uppercase shadow-sm border border-slate-50">{filteredTransactions.length} Records</span>
+                        <div className="ios-glass rounded-[2rem] md:rounded-[3.5rem] border border-white shadow-2xl overflow-hidden mb-12">
+                            <div className="p-6 md:p-8 border-b border-white/40 flex justify-between items-center bg-white/30">
+                                <h3 className="text-lg md:text-xl font-extrabold uppercase tracking-tighter">Activity Logs</h3>
+                                <span className="text-[9px] md:text-[10px] font-black bg-white px-4 md:px-5 py-2 rounded-full uppercase shadow-sm">{filteredTxs.length} Items</span>
                             </div>
-                            <div className="p-6 space-y-3 max-h-[600px] overflow-y-auto">
-                                {filteredTransactions.map(t => (
-                                    <div key={t.id} className="flex justify-between items-center p-5 bg-white/50 rounded-[2rem] border border-white hover:bg-white transition-all group">
-                                        <div className="flex items-center gap-5">
-                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${t.type === TransactionType.INCOME ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                            <div className="p-3 md:p-6 space-y-2 max-h-[500px] overflow-y-auto">
+                                {filteredTxs.map(t => (
+                                    <div key={t.id} className="flex justify-between items-center p-4 bg-white/50 rounded-2xl border border-white group">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${t.type === TransactionType.INCOME ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
                                                 {t.type === TransactionType.INCOME ? '+' : '-'}
                                             </div>
                                             <div>
-                                                <h4 className="font-bold text-slate-800 leading-tight">{t.description}</h4>
-                                                <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-1">{t.date}</p>
+                                                <h4 className="font-bold text-slate-800 text-sm leading-tight">{t.description}</h4>
+                                                <p className="text-[8px] text-slate-400 font-black uppercase tracking-widest">{t.date}</p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-6">
-                                            <p className={`text-xl font-black tabular-nums tracking-tighter ${t.type === TransactionType.INCOME ? 'text-emerald-600' : 'text-slate-900'}`}>
-                                                {t.type === TransactionType.INCOME ? '+' : '-'}৳{t.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                        <div className="flex items-center gap-4">
+                                            <p className={`text-base font-black tabular-nums tracking-tighter ${t.type === TransactionType.INCOME ? 'text-emerald-600' : 'text-slate-900'}`}>
+                                                ৳{t.amount.toLocaleString(undefined, {minimumFractionDigits: 2})}
                                             </p>
-                                            <button onClick={async () => {
-                                                const updated = transactions.filter(tx => tx.id !== t.id);
-                                                setTransactions(updated);
-                                                await CloudSync.syncTransactions(currentUser.username || currentUser.email, updated);
-                                            }} className="p-2 opacity-0 group-hover:opacity-100 transition-all text-rose-300 hover:text-rose-600">
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                                            </button>
+                                            {currentUser?.role === UserRole.ADMIN && (
+                                                <button onClick={async () => {
+                                                    const updated = transactions.filter(tx => tx.id !== t.id);
+                                                    setTransactions(updated);
+                                                    await CloudSync.syncTransactions(currentUser.username || currentUser.email, updated);
+                                                }} className="text-rose-300 hover:text-rose-600">×</button>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
-                                {filteredTransactions.length === 0 && (
-                                    <div className="py-20 text-center">
-                                        <p className="text-slate-300 font-black uppercase text-[10px] tracking-[0.4em]">No {filterType.toLowerCase()} found</p>
-                                    </div>
-                                )}
                             </div>
                         </div>
                     </main>
-                    <footer className="mt-20 text-center pb-10">
-                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.5em] leading-none">POWERED BY ARVIN</p>
-                    </footer>
                 </div>
             );
         };
