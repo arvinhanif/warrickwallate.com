@@ -121,7 +121,6 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         ::-webkit-scrollbar { width: 0px; background: transparent; }
 
-        /* Premium Admin Button Style */
         .admin-portal-btn {
             font-size: 10px;
             font-weight: 800;
@@ -143,11 +142,38 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.03);
         }
-        .admin-portal-btn svg {
-            transition: transform 0.3s ease;
+
+        .reg-teaser {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 4px 4px 4px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            margin-top: 16px;
         }
-        .admin-portal-btn:hover svg {
-            transform: rotate(90deg);
+        .reg-teaser p {
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            margin-right: 8px;
+        }
+        .reg-teaser button {
+            background: #2563eb;
+            color: white;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 6px 16px;
+            border-radius: 999px;
+            transition: all 0.3s ease;
+        }
+        .reg-teaser button:hover {
+            background: #1d4ed8;
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
         }
     </style>
 <script type="importmap">
@@ -170,30 +196,24 @@
         const UserRole = { ADMIN: 'ADMIN', USER: 'USER' };
 
         /**
-         * AUTO-MIGRATION LOGIC:
-         * This ensures that when current users open the app on GitHub,
-         * their existing data (even from the previous version) is preserved.
+         * MIGRATION LAYER:
+         * Automatically moves data from legacy keys used in previous versions 
+         * to the new standardized GLOBAL_ keys to ensure no user data is lost.
          */
         const runMigration = () => {
-            // Legacy Storage Keys
             const legacyUsers = localStorage.getItem('WARRICK_USERS');
-            const legacySession = localStorage.getItem('W_SESSION');
-
-            // 1. Move old users to the new Global list if not already there
             if (legacyUsers) {
-                const globalUsers = localStorage.getItem('GLOBAL_WARRICK_USERS');
-                if (!globalUsers) {
-                    localStorage.setItem('GLOBAL_WARRICK_USERS', legacyUsers);
-                }
+                const current = localStorage.getItem('GLOBAL_WARRICK_USERS');
+                if (!current) localStorage.setItem('GLOBAL_WARRICK_USERS', legacyUsers);
             }
-
-            // 2. Scan for all transaction keys and ensure global prefixing
+            
+            // Migrate individual user transaction ledgers
             Object.keys(localStorage).forEach(key => {
                 if (key.startsWith('TX_') && !key.startsWith('GLOBAL_TX_')) {
                     const data = localStorage.getItem(key);
-                    const newKey = 'GLOBAL_' + key;
-                    if (!localStorage.getItem(newKey)) {
-                        localStorage.setItem(newKey, data);
+                    const globalKey = 'GLOBAL_' + key;
+                    if (!localStorage.getItem(globalKey)) {
+                        localStorage.setItem(globalKey, data);
                     }
                 }
             });
@@ -205,7 +225,6 @@
             },
             async saveUser(user) {
                 const users = await this.getAllUsers();
-                // Check if user already exists to avoid duplicates
                 if (!users.some(u => u.email === user.email)) {
                     users.push(user);
                     localStorage.setItem('GLOBAL_WARRICK_USERS', JSON.stringify(users));
@@ -213,7 +232,6 @@
                 return user;
             },
             async getTransactions(userId) {
-                // Check both prefixed and un-prefixed for deep compatibility
                 const data = localStorage.getItem(`GLOBAL_TX_${userId}`) || localStorage.getItem(`TX_${userId}`);
                 return JSON.parse(data || '[]');
             },
@@ -226,14 +244,14 @@
         const StatCard = ({ label, amount, type, currencySymbol }) => {
             const getStyle = () => {
                 switch (type) {
-                    case 'income': return 'bg-green-100/60 text-emerald-600 border border-white shadow-emerald-500/5';
-                    case 'expense': return 'bg-red-100/60 text-rose-600 border border-white shadow-rose-500/5';
-                    case 'balance': return 'bg-blue-100/60 text-blue-700 border border-white shadow-blue-500/5';
+                    case 'income': return 'bg-green-100/60 text-emerald-600 border border-white';
+                    case 'expense': return 'bg-red-100/60 text-rose-600 border border-white';
+                    case 'balance': return 'bg-blue-100/60 text-blue-700 border border-white';
                     default: return 'bg-white text-slate-800 border border-white';
                 }
             };
             return (
-                <div className={`ios-widget p-6 md:p-7 ios-glass ${getStyle()} flex flex-col justify-between h-36 md:h-40 shadow-2xl animate-ios transition-all duration-300`}>
+                <div className={`ios-widget p-6 md:p-7 ios-glass ${getStyle()} flex flex-col justify-between h-36 md:h-40 shadow-2xl animate-ios`}>
                     <p className={`text-[10px] md:text-[11px] font-black uppercase tracking-widest ${type === 'balance' ? 'text-blue-500' : 'text-slate-400'}`}>{label}</p>
                     <h2 className="text-2xl md:text-3xl font-extrabold tabular-nums tracking-tighter leading-none">
                         <span className="text-lg md:text-xl mr-1 font-medium opacity-70">{currencySymbol}</span>
@@ -281,7 +299,6 @@
             const handleSignin = async (e) => {
                 e.preventDefault();
                 setIsLoading(true);
-                setAuthError('');
                 const fd = new FormData(e.target);
                 const login = fd.get('login');
                 const pass = fd.get('pass');
@@ -291,22 +308,7 @@
                     localStorage.setItem('W_SESSION', JSON.stringify(user));
                     await loadUserData(user);
                 } else {
-                    setAuthError('Invalid Email or Password');
-                }
-                setIsLoading(false);
-            };
-
-            const handleAdminSignin = (e) => {
-                e.preventDefault();
-                setIsLoading(true);
-                const id = e.target.adminId.value;
-                const pass = e.target.adminPass.value;
-                if (id === 'arvin_hanif' && pass === 'arvin_hanif') {
-                    const admin = { name: 'Arvin Hanif', email: 'admin@warrick.io', role: UserRole.ADMIN, username: 'arvin_hanif' };
-                    localStorage.setItem('W_SESSION', JSON.stringify(admin));
-                    loadUserData(admin);
-                } else {
-                    setAuthError('Admin access denied');
+                    setAuthError('Invalid Credentials');
                 }
                 setIsLoading(false);
             };
@@ -315,10 +317,11 @@
                 e.preventDefault();
                 setIsLoading(true);
                 const fd = new FormData(e.target);
+                const email = fd.get('email');
                 const newUser = {
                     name: fd.get('name'),
-                    email: fd.get('email'),
-                    username: fd.get('email'),
+                    email: email,
+                    username: email,
                     mobile: fd.get('mobile'),
                     pass: fd.get('pass'),
                     role: UserRole.USER
@@ -332,34 +335,44 @@
             const exportToPDF = () => {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
-                doc.setFont("helvetica", "bold");
-                doc.text("WARRICK WALLET REPORT", 14, 20);
-                doc.setFontSize(10);
-                doc.text(`User: ${currentUser.name} | Date: ${new Date().toLocaleString()}`, 14, 28);
                 
-                const tableData = transactions.map(t => [t.date, t.description, t.type, t.amount.toFixed(2)]);
+                // HEADER BRANDING & LIVE LINK
+                doc.setFontSize(8);
+                doc.setTextColor(37, 99, 235);
+                doc.text("SCAN OR CLICK TO ACCESS LIVE WALLET: https://arvinhanif.github.io/warrickwallate.com/", 14, 10);
+                
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(22);
+                doc.text("WARRICK WALLET REPORT", 14, 25);
+                
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "normal");
+                doc.text(`User: ${currentUser.name} | Statement Date: ${new Date().toLocaleString()}`, 14, 32);
+                
+                // Data mapping for table - ensure date is in a standard ISO-like format for import reliability
+                const tableData = transactions.map(t => [
+                    new Date(t.date).toLocaleString(), 
+                    t.description, 
+                    t.type, 
+                    t.amount.toFixed(2)
+                ]);
                 
                 doc.autoTable({ 
-                    startY: 35, 
-                    head: [['Date', 'Description', 'Type', 'Amount']], 
+                    startY: 40, 
+                    head: [['Timestamp', 'Description', 'Type', 'Amount (BDT)']], 
                     body: tableData,
-                    willDrawCell: (data) => {
-                        if (data.section === 'body') {
-                            const type = data.row.raw[2];
-                            if (type === TransactionType.EXPENSE) {
-                                data.doc.setFillColor(254, 226, 226);
-                            } else if (type === TransactionType.INCOME) {
-                                data.doc.setFillColor(34, 197, 94);
-                                data.doc.setTextColor(255, 255, 255);
-                            }
-                        }
-                    }
+                    headStyles: { fillColor: [30, 41, 59] },
+                    alternateRowStyles: { fillColor: [248, 250, 252] }
                 });
                 
+                // INVISIBLE SIGNATURE FOR SMART IMPORT
                 const signatureData = btoa(JSON.stringify(transactions));
-                doc.setFontSize(1); doc.setTextColor(250, 250, 250);
-                doc.text(`WARRICK_DATA:${signatureData}`, 14, 290);
-                doc.save(`Warrick_Export_${currentUser.name}.pdf`);
+                doc.setFontSize(1); 
+                doc.setTextColor(255, 255, 255); 
+                doc.text(`WARRICK_DATA_V2:${signatureData}`, 14, 290);
+                
+                doc.save(`Warrick_Wallet_Report_${currentUser.name.replace(/\s+/g, '_')}.pdf`);
             };
 
             const importFromPDF = async (e) => {
@@ -375,17 +388,29 @@
                         for (let i = 1; i <= pdf.numPages; i++) {
                             const page = await pdf.getPage(i);
                             const textContent = await page.getTextContent();
-                            fullText += textContent.items.map(item => item.str).join(" ");
+                            fullText += textContent.items.map(item => item.str).join("");
                         }
-                        if (fullText.includes("WARRICK_DATA:")) {
-                            const rawData = fullText.split("WARRICK_DATA:")[1].trim().split(" ")[0];
+                        
+                        // Handle V1 and V2 signatures for backward compatibility
+                        const sig = fullText.includes("WARRICK_DATA_V2:") ? "WARRICK_DATA_V2:" : (fullText.includes("WARRICK_DATA:") ? "WARRICK_DATA:" : null);
+                        
+                        if (sig) {
+                            const rawData = fullText.split(sig)[1].trim().split(" ")[0];
                             const importedTxs = JSON.parse(atob(rawData));
+                            
+                            // Merge and unique by ID
                             const merged = [...importedTxs, ...transactions];
                             const unique = Array.from(new Map(merged.map(item => [item.id, item])).values());
+                            
+                            // Re-sort by date
+                            unique.sort((a, b) => new Date(b.date) - new Date(a.date));
+                            
                             setTransactions(unique);
                             await CloudSync.syncTransactions(currentUser.username || currentUser.email, unique);
                         }
-                    } catch (err) {}
+                    } catch (err) {
+                        alert("Import failed. Please use an original Warrick Wallet PDF.");
+                    }
                     setIsLoading(false);
                 };
                 reader.readAsArrayBuffer(file);
@@ -395,63 +420,53 @@
                 return (
                     <div className="fixed inset-0 flex items-center justify-center p-6 bg-[#e0e5ec]">
                         <div className="w-full max-w-[400px] animate-ios">
-                            <div className="text-center mb-10">
-                                <Logo />
-                            </div>
+                            <div className="text-center mb-10"><Logo /></div>
                             <div className="neumorphic-card p-10 md:p-12">
                                 {view === 'signin' && (
                                     <form onSubmit={handleSignin} className="space-y-6">
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-bold text-slate-500 ml-4">Username</label>
-                                            <input name="login" required placeholder="Email or Number" className="neumorphic-input font-medium" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-bold text-slate-500 ml-4">Password</label>
-                                            <input name="pass" type="password" required placeholder="Enter Password" className="neumorphic-input font-medium" />
-                                        </div>
-                                        
-                                        {authError && <p className="text-rose-500 text-[10px] font-bold text-center uppercase tracking-widest">{authError}</p>}
+                                        <input name="login" required placeholder="Email or Mobile" className="neumorphic-input font-medium" />
+                                        <input name="pass" type="password" required placeholder="Password" className="neumorphic-input font-medium" />
                                         <button className="w-full py-4 neumorphic-button font-bold text-lg">Sign In</button>
-                                        
-                                        <div className="flex flex-col gap-3 mt-6 text-center border-t border-slate-300 pt-6">
-                                            <button 
-                                                type="button" 
-                                                onClick={() => {setView('admin'); setAuthError('');}} 
-                                                className="admin-portal-btn mx-auto"
-                                            >
-                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5"/></svg>
-                                                Admin Portal
-                                            </button>
-                                            <p className="text-xs font-bold text-slate-500 mt-4">Don't have an account? <button type="button" onClick={() => setView('signup')} className="text-blue-600">Register</button></p>
+                                        <div className="flex flex-col items-center mt-6 pt-6 border-t border-slate-300">
+                                            <button type="button" onClick={() => setView('admin')} className="admin-portal-btn mb-4">Admin Portal</button>
+                                            <div className="reg-teaser">
+                                                <p>New to Warrick?</p>
+                                                <button type="button" onClick={() => setView('signup')}>Register</button>
+                                            </div>
                                         </div>
                                     </form>
                                 )}
                                 {view === 'admin' && (
-                                    <form onSubmit={handleAdminSignin} className="space-y-6">
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-bold text-slate-500 ml-4">Admin ID</label>
-                                            <input name="adminId" required placeholder="ID Required" className="neumorphic-input font-medium" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-bold text-slate-500 ml-4">Secret Key</label>
-                                            <input name="adminPass" type="password" required placeholder="Enter Secret" className="neumorphic-input font-medium" />
-                                        </div>
-                                        {authError && <p className="text-rose-500 text-[10px] font-bold text-center">{authError}</p>}
+                                    <form onSubmit={(e) => {
+                                        e.preventDefault();
+                                        if (e.target.id.value === 'arvin_hanif' && e.target.pw.value === 'arvin_hanif') {
+                                            loadUserData({ name: 'Arvin Hanif', email: 'admin@warrick.io', role: UserRole.ADMIN, username: 'arvin_hanif' });
+                                        }
+                                    }} className="space-y-6">
+                                        <input name="id" required placeholder="Admin ID" className="neumorphic-input" />
+                                        <input name="pw" type="password" required placeholder="Secret" className="neumorphic-input" />
                                         <button className="w-full py-4 neumorphic-button font-bold text-lg">Authorize</button>
-                                        <button type="button" onClick={() => setView('signin')} className="w-full text-[10px] font-black text-slate-400 uppercase tracking-widest mt-4 flex items-center justify-center gap-1 hover:text-slate-600 transition-colors">
-                                            <svg className="w-3 h-3 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 5l7 7m0 0l-7 7m7-7H3" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5"/></svg>
-                                            Back to Login
-                                        </button>
+                                        <div className="flex flex-col items-center mt-6 pt-6 border-t border-slate-300">
+                                            <div className="reg-teaser">
+                                                <p>Mistake?</p>
+                                                <button type="button" onClick={() => setView('signin')}>Back to Login</button>
+                                            </div>
+                                        </div>
                                     </form>
                                 )}
                                 {view === 'signup' && (
                                     <form onSubmit={handleSignup} className="space-y-5">
                                         <input name="name" required placeholder="Full Name" className="neumorphic-input" />
-                                        <input name="email" required type="email" placeholder="Email Address" className="neumorphic-input" />
-                                        <input name="mobile" required placeholder="Mobile Number" className="neumorphic-input" />
+                                        <input name="email" required type="email" placeholder="Email" className="neumorphic-input" />
+                                        <input name="mobile" required placeholder="Mobile" className="neumorphic-input" />
                                         <input name="pass" type="password" required placeholder="Password" className="neumorphic-input" />
-                                        <button className="w-full py-4 neumorphic-button font-bold text-lg">Sign Up</button>
-                                        <button type="button" onClick={() => setView('signin')} className="w-full text-xs font-bold text-slate-500 mt-4 text-center block">Already a member? Login</button>
+                                        <button className="w-full py-4 neumorphic-button font-bold text-lg">Join Warrick</button>
+                                        <div className="flex flex-col items-center mt-6 pt-6 border-t border-slate-300">
+                                            <div className="reg-teaser">
+                                                <p>Already a member?</p>
+                                                <button type="button" onClick={() => setView('signin')}>Login</button>
+                                            </div>
+                                        </div>
                                     </form>
                                 )}
                             </div>
@@ -466,20 +481,18 @@
 
             return (
                 <div className="w-full min-h-screen py-6 px-4 md:px-10 lg:px-20">
-                    {isLoading && <div className="fixed inset-0 bg-white/60 backdrop-blur-md z-[200] flex items-center justify-center"><div className="loading-spinner"></div></div>}
                     <div className="max-w-[1200px] mx-auto flex flex-wrap justify-center md:justify-end gap-2 mb-4">
-                        <button onClick={exportToPDF} className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl shadow-sm ios-button text-blue-600 border border-blue-50 text-[10px] font-black uppercase tracking-widest">Export</button>
-                        <button onClick={() => fileInputRef.current.click()} className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl shadow-sm ios-button text-emerald-600 border border-emerald-50 text-[10px] font-black uppercase tracking-widest">Import</button>
+                        <button onClick={exportToPDF} className="px-4 py-2 bg-white rounded-xl ios-button text-blue-600 text-[10px] font-black uppercase tracking-widest border border-blue-50 shadow-sm">Export Report</button>
+                        <button onClick={() => fileInputRef.current.click()} className="px-4 py-2 bg-white rounded-xl ios-button text-emerald-600 text-[10px] font-black uppercase tracking-widest border border-emerald-50 shadow-sm">Import Activity</button>
                         <input type="file" ref={fileInputRef} onChange={importFromPDF} accept=".pdf" className="hidden" />
-                        <button onClick={() => {localStorage.removeItem('W_SESSION'); setView('signin');}} className="px-4 py-2 bg-white rounded-xl shadow-sm ios-button text-rose-500 font-black text-[10px] uppercase tracking-widest border border-rose-50">LOGOUT</button>
+                        <button onClick={() => {localStorage.removeItem('W_SESSION'); setView('signin');}} className="px-4 py-2 bg-white rounded-xl ios-button text-rose-500 font-black text-[10px] uppercase tracking-widest border border-rose-50 shadow-sm">LOGOUT</button>
                     </div>
                     <header className="max-w-[1200px] mx-auto mb-8 text-center md:text-left">
                         <Logo className="header-logo" />
-                        
                         <div className="mt-10 flex justify-center">
                             <div className="ios-glass p-1.5 rounded-full border border-white shadow-xl flex items-center gap-1">
                                 {['ALL', 'INCOME', 'EXPENSE'].map(f => (
-                                    <button key={f} onClick={() => setFilterType(TransactionType[f])} className={`px-6 py-2.5 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${filterType === TransactionType[f] ? 'bg-white text-blue-600 shadow-md' : 'text-slate-500'}`}>{f === 'ALL' ? 'History' : f.charAt(0) + f.slice(1).toLowerCase()}</button>
+                                    <button key={f} onClick={() => setFilterType(TransactionType[f])} className={`px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${filterType === TransactionType[f] ? 'bg-white text-blue-600 shadow-md' : 'text-slate-500'}`}>{f}</button>
                                 ))}
                             </div>
                         </div>
@@ -490,13 +503,12 @@
                             <StatCard label="Total Income" amount={incTotal} type="income" currencySymbol="৳" />
                             <StatCard label="Total Expenses" amount={expTotal} type="expense" currencySymbol="৳" />
                         </div>
-                        
-                        <div className={`ios-glass p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-white shadow-2xl transition-all duration-500 ${entryType === TransactionType.EXPENSE ? 'bg-red-100/60' : 'bg-green-100/60'}`}>
-                             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6 md:mb-8 text-center md:text-left">
-                                <h3 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">New Entry</h3>
-                                <div className="p-1 bg-slate-200/50 rounded-2xl flex border border-white w-full md:w-auto">
-                                    <button onClick={() => setEntryType(TransactionType.EXPENSE)} className={`flex-1 md:flex-none px-6 md:px-8 py-2.5 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest ${entryType === TransactionType.EXPENSE ? 'bg-white text-rose-600 shadow-md' : 'text-slate-400'}`}>Expense</button>
-                                    <button onClick={() => setEntryType(TransactionType.INCOME)} className={`flex-1 md:flex-none px-6 md:px-8 py-2.5 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest ${entryType === TransactionType.INCOME ? 'bg-white text-emerald-600 shadow-md' : 'text-slate-400'}`}>Income</button>
+                        <div className={`ios-glass p-6 md:p-10 rounded-[2rem] border border-white shadow-2xl transition-all duration-500 ${entryType === TransactionType.EXPENSE ? 'bg-red-100/60' : 'bg-green-100/60'}`}>
+                             <div className="flex flex-col md:flex-row md:justify-between items-center gap-4 mb-8">
+                                <h3 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">Sync New Record</h3>
+                                <div className="p-1 bg-slate-200/50 rounded-2xl flex border border-white">
+                                    <button onClick={() => setEntryType(TransactionType.EXPENSE)} className={`px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${entryType === TransactionType.EXPENSE ? 'bg-white text-rose-600 shadow-md' : 'text-slate-400'}`}>Expense</button>
+                                    <button onClick={() => setEntryType(TransactionType.INCOME)} className={`px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${entryType === TransactionType.INCOME ? 'bg-white text-emerald-600 shadow-md' : 'text-slate-400'}`}>Income</button>
                                 </div>
                              </div>
                              <form onSubmit={async (e) => {
@@ -504,33 +516,34 @@
                                 const fd = new FormData(e.target);
                                 const amt = parseFloat(fd.get('amt'));
                                 if(!amt) return;
-                                const newTx = { id: Date.now().toString(), description: fd.get('desc'), amount: amt, type: entryType, date: new Date().toLocaleString() };
+                                // Use ISO string for date to ensure universal compatibility when importing back
+                                const newTx = { id: Date.now().toString(), description: fd.get('desc'), amount: amt, type: entryType, date: new Date().toISOString() };
                                 const updated = [newTx, ...transactions];
                                 setTransactions(updated);
                                 await CloudSync.syncTransactions(currentUser.username || currentUser.email, updated);
                                 e.target.reset();
-                             }} className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-                                <input name="desc" required placeholder="Memo..." className="px-5 py-4 rounded-2xl bg-white border border-slate-100 outline-none font-bold text-sm" />
-                                <input name="amt" type="number" step="0.01" required placeholder="0.00 (৳)" className="px-5 py-4 rounded-2xl bg-white border border-slate-100 outline-none font-bold text-sm" />
-                                <button className={`py-4 text-white font-black rounded-2xl uppercase tracking-widest text-[10px] shadow-xl ${entryType === TransactionType.INCOME ? 'bg-emerald-600' : 'bg-rose-600'}`}>Confirm {entryType}</button>
+                             }} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <input name="desc" required placeholder="Reason / Category..." className="px-5 py-4 rounded-2xl bg-white border border-slate-100 outline-none font-bold" />
+                                <input name="amt" type="number" step="0.01" required placeholder="Amount (৳)" className="px-5 py-4 rounded-2xl bg-white border border-slate-100 outline-none font-bold" />
+                                <button className={`py-4 text-white font-black rounded-2xl uppercase tracking-widest text-[10px] shadow-xl ${entryType === TransactionType.INCOME ? 'bg-emerald-600' : 'bg-rose-600'}`}>Update Ledger</button>
                              </form>
                         </div>
-
-                        <div className="ios-glass rounded-[2rem] md:rounded-[3.5rem] border border-white shadow-2xl overflow-hidden mb-12">
+                        <div className="ios-glass rounded-[2rem] border border-white shadow-2xl overflow-hidden mb-12">
                             <div className="p-6 md:p-8 border-b border-white/40 flex justify-between items-center bg-white/30">
                                 <h3 className="text-lg md:text-xl font-extrabold uppercase tracking-tighter">Activity Logs</h3>
-                                <span className="text-[9px] md:text-[10px] font-black bg-white px-4 md:px-5 py-2 rounded-full uppercase shadow-sm">{filteredTxs.length} Items</span>
                             </div>
                             <div className="p-3 md:p-6 space-y-2 max-h-[500px] overflow-y-auto">
                                 {filteredTxs.map(t => (
-                                    <div key={t.id} className={`flex justify-between items-center p-4 rounded-2xl border border-white group ${t.type === TransactionType.INCOME ? 'bg-green-100/60 hover:bg-green-200/80' : 'bg-red-100/60 hover:bg-red-200/80'}`}>
+                                    <div key={t.id} className={`flex justify-between items-center p-4 rounded-2xl border border-white group ${t.type === TransactionType.INCOME ? 'bg-green-100/60' : 'bg-red-100/60'}`}>
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-inner ${t.type === TransactionType.INCOME ? 'bg-green-200 text-green-700' : 'bg-red-200 text-red-700'}`}>
+                                            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white shadow-inner font-black">
                                                 {t.type === TransactionType.INCOME ? '+' : '-'}
                                             </div>
                                             <div>
-                                                <h4 className="font-bold text-slate-800 text-sm leading-tight">{t.description}</h4>
-                                                <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest">{t.date}</p>
+                                                <h4 className="font-bold text-slate-800 text-sm">{t.description}</h4>
+                                                <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest">
+                                                    {new Date(t.date).toLocaleString()}
+                                                </p>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-4">
