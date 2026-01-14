@@ -114,6 +114,8 @@
         .animate-ios { animation: fadeIn 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
         
         ::-webkit-scrollbar { width: 0px; background: transparent; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
         .reg-teaser {
             display: inline-flex;
@@ -163,7 +165,6 @@
             background: rgba(255, 255, 255, 0.3);
         }
         
-        /* Time Range Button Styles Fixed */
         .time-range-btn {
             position: relative;
             background: white !important;
@@ -178,7 +179,7 @@
             transform: translateX(-50%);
             width: 14px;
             height: 2.5px;
-            background: #add8e6; /* lightblue explicitly */
+            background: #add8e6; 
             border-radius: 10px;
         }
     </style>
@@ -202,17 +203,14 @@
         const TransactionType = { INCOME: 'INCOME', EXPENSE: 'EXPENSE', ALL: 'ALL' };
         const UserRole = { ADMIN: 'ADMIN', USER: 'USER' };
 
-        // Data Adjustment Logic for existing users
+        // Logic for auto-adjusting legacy user data
         const runMigration = () => {
-            // 1. Adjust Legacy User Data
             const legacyUsersRaw = localStorage.getItem('WARRICK_USERS');
             const globalUsersRaw = localStorage.getItem('GLOBAL_WARRICK_USERS');
             
             if (legacyUsersRaw) {
                 const legacyUsers = JSON.parse(legacyUsersRaw);
                 const globalUsers = globalUsersRaw ? JSON.parse(globalUsersRaw) : [];
-                
-                // Merge users without duplicates
                 const mergedUsers = [...globalUsers];
                 legacyUsers.forEach(lUser => {
                     if (!mergedUsers.some(gUser => gUser.email === lUser.email)) {
@@ -222,17 +220,15 @@
                 localStorage.setItem('GLOBAL_WARRICK_USERS', JSON.stringify(mergedUsers));
             }
 
-            // 2. Adjust Transaction Data
+            // Sync legacy transactions to global context
             Object.keys(localStorage).forEach(key => {
                 if (key.startsWith('TX_') && !key.startsWith('GLOBAL_TX_')) {
                     const legacyData = localStorage.getItem(key);
                     const globalKey = 'GLOBAL_' + key;
                     const existingGlobalData = localStorage.getItem(globalKey);
-
                     if (!existingGlobalData) {
                         localStorage.setItem(globalKey, legacyData);
                     } else {
-                        // Optional: Merge if both exist
                         const lTxs = JSON.parse(legacyData);
                         const gTxs = JSON.parse(existingGlobalData);
                         const combined = Array.from(new Map([...lTxs, ...gTxs].map(tx => [tx.id, tx])).values());
@@ -255,7 +251,6 @@
                 return user;
             },
             async getTransactions(userId) {
-                // Try global first, fallback to adjusted local
                 const data = localStorage.getItem(`GLOBAL_TX_${userId}`);
                 return JSON.parse(data || '[]');
             },
@@ -306,7 +301,7 @@
             const fileInputRef = useRef(null);
 
             useEffect(() => {
-                runMigration(); // Adjust data for returning users automatically
+                runMigration(); // Always run migration for returning users
                 const session = JSON.parse(localStorage.getItem('W_SESSION'));
                 if (session) loadUserData(session);
             }, []);
@@ -478,12 +473,6 @@
 
             return (
                 <div className="w-full min-h-screen py-6 px-4 md:px-10 lg:px-20">
-                    <div className="max-w-[1200px] mx-auto flex flex-wrap justify-center md:justify-end gap-2 mb-4">
-                        <button onClick={exportToPDF} className="px-4 py-2 bg-white rounded-xl ios-button text-blue-600 text-[10px] font-black uppercase tracking-widest border border-blue-50 shadow-sm">Export Report</button>
-                        <button onClick={() => fileInputRef.current.click()} className="px-4 py-2 bg-white rounded-xl ios-button text-emerald-600 text-[10px] font-black uppercase tracking-widest border border-emerald-50 shadow-sm">Import Activity</button>
-                        <input type="file" ref={fileInputRef} onChange={importFromPDF} accept=".pdf" className="hidden" />
-                        <button onClick={() => {localStorage.removeItem('W_SESSION'); setView('signin');}} className="px-4 py-2 bg-white rounded-xl ios-button text-rose-500 font-black text-[10px] uppercase tracking-widest border border-rose-50 shadow-sm">LOGOUT</button>
-                    </div>
                     <header className="max-w-[1200px] mx-auto mb-8 text-center md:text-left">
                         <Logo className="header-logo" />
                         <div className="mt-10 flex justify-center">
@@ -528,24 +517,26 @@
                             <div className="p-6 md:p-8 border-b border-white/40 bg-white/30">
                                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
                                     <h3 className="text-lg md:text-xl font-extrabold uppercase tracking-tighter text-slate-800">Activity Logs</h3>
-                                    <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-200/30 rounded-2xl border border-white/50">
-                                        {[
-                                            {id: 'ALL', label: 'ALL'},
-                                            {id: '24H', label: '24H'},
-                                            {id: '7D', label: '7D'},
-                                            {id: '15D', label: '15D'},
-                                            {id: '30D', label: '30D'},
-                                            {id: '6M', label: '6M'},
-                                            {id: '1Y', label: '1Y'}
-                                        ].map(range => (
-                                            <button 
-                                                key={range.id} 
-                                                onClick={() => setTimeRange(range.id)} 
-                                                className={`time-range-btn px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-tight shadow-sm ${timeRange === range.id ? 'active text-blue-600 scale-105 z-10' : 'text-slate-400 hover:text-slate-600'}`}
-                                            >
-                                                {range.label}
-                                            </button>
-                                        ))}
+                                    <div className="flex items-center p-1 bg-slate-200/30 rounded-2xl border border-white/50 overflow-x-auto scrollbar-hide max-w-full">
+                                        <div className="flex flex-row flex-nowrap gap-1.5 min-w-max">
+                                            {[
+                                                {id: 'ALL', label: 'ALL'},
+                                                {id: '24H', label: '24H'},
+                                                {id: '7D', label: '7D'},
+                                                {id: '15D', label: '15D'},
+                                                {id: '30D', label: '30D'},
+                                                {id: '6M', label: '6M'},
+                                                {id: '1Y', label: '1Y'}
+                                            ].map(range => (
+                                                <button 
+                                                    key={range.id} 
+                                                    onClick={() => setTimeRange(range.id)} 
+                                                    className={`time-range-btn px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-tight flex-shrink-0 ${timeRange === range.id ? 'active text-blue-600 scale-105 z-10' : 'text-slate-400 hover:text-slate-600'}`}
+                                                >
+                                                    {range.label}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -577,6 +568,15 @@
                                         </div>
                                     ))
                                 )}
+                            </div>
+                        </div>
+
+                        <div className="max-w-[1200px] mx-auto px-4 mt-12 pb-8">
+                            <div className="flex flex-row flex-nowrap justify-center md:justify-end gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                                <button onClick={exportToPDF} className="whitespace-nowrap px-6 py-3 bg-white rounded-2xl ios-button text-blue-600 text-[11px] font-black uppercase tracking-widest border border-blue-100 flex-shrink-0">EXPORT</button>
+                                <button onClick={() => fileInputRef.current.click()} className="whitespace-nowrap px-6 py-3 bg-white rounded-2xl ios-button text-emerald-600 text-[11px] font-black uppercase tracking-widest border border-emerald-100 flex-shrink-0">IMPORT</button>
+                                <input type="file" ref={fileInputRef} onChange={importFromPDF} accept=".pdf" className="hidden" />
+                                <button onClick={() => {localStorage.removeItem('W_SESSION'); setView('signin');}} className="whitespace-nowrap px-6 py-3 bg-white rounded-2xl ios-button text-rose-500 font-black text-[11px] uppercase tracking-widest border border-rose-100 flex-shrink-0">LOGOUT</button>
                             </div>
                         </div>
                     </main>
