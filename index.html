@@ -1,187 +1,592 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WARRICK | Premium Invoicing</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
-          },
-          borderRadius: {
-            'ios': '24px',
-            'ios-lg': '40px',
-            'neu': '50%'
-          },
-          colors: {
-            ios: {
-              bg: '#E0E5EC',
-              card: '#E0E5EC',
-              blue: '#2D3436',
-              gray: '#636E72',
-              separator: '#B2BEC3'
-            }
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    body {
-      background-color: #E0E5EC; 
-      color: #2D3436;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-
-    /* Hide number input spinners */
-    input::-webkit-outer-spin-button,
-    input::-webkit-inner-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-    input[type=number] {
-      -moz-appearance: textfield;
-    }
-
-    .neu-flat {
-      background: #E0E5EC;
-      box-shadow: 9px 9px 16px rgb(163,177,198,0.6), -9px -9px 16px rgba(255,255,255, 0.5);
-    }
-
-    .neu-flat-blue {
-      background: #e3f2fd;
-      box-shadow: 9px 9px 16px rgba(187, 222, 251, 0.8), -9px -9px 16px rgba(255, 255, 255, 0.9);
-    }
-
-    .neu-flat-green {
-      background: #f1f8e9;
-      box-shadow: 9px 9px 16px rgba(220, 237, 200, 0.8), -9px -9px 16px rgba(255, 255, 255, 0.9);
-    }
-
-    .neu-flat-red {
-      background: #ffebee;
-      box-shadow: 9px 9px 16px rgba(255, 205, 210, 0.8), -9px -9px 16px rgba(255, 255, 255, 0.9);
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WARRICK WALLET | GLOBAL CLOUD SYNC</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- PDF Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     
-    .neu-pressed {
-      background: #E0E5EC;
-      box-shadow: inset 6px 6px 12px #b8b9be, inset -6px -6px 12px #ffffff;
-    }
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@1,900&family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --ios-bg: #f2f2f7; }
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            background-color: var(--ios-bg); 
+            color: #444;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
 
-    .neu-button {
-      background: #E0E5EC;
-      box-shadow: 6px 6px 12px #b8b9be, -6px -6px 12px #ffffff;
-      transition: all 0.2s ease-in-out;
-    }
+        .brand-container {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        @media (min-width: 768px) {
+            .brand-container.header-logo {
+                align-items: flex-start;
+            }
+        }
+        .brand-text {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+            letter-spacing: -0.04em;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            line-height: 1;
+        }
+        .brand-dot {
+            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-family: 'Playfair Display', serif;
+        }
+        .brand-underline {
+            margin-top: 4px;
+            width: 40px;
+            height: 3px;
+            background: linear-gradient(90deg, #2563eb, transparent);
+            border-radius: 2px;
+        }
+        .powered-tag {
+            margin-top: 8px;
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 99px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(4px);
+            font-size: 9px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            color: #64748b;
+        }
 
-    .neu-button:active {
-      box-shadow: inset 4px 4px 8px #b8b9be, inset -4px -4px 8px #ffffff;
-      transform: scale(0.98);
-    }
+        .neumorphic-card {
+            background: #e0e5ec;
+            border-radius: 50px;
+            box-shadow: 20px 20px 60px #bec3c9, -20px -20px 60px #ffffff;
+        }
+        .neumorphic-input {
+            background: #e0e5ec;
+            border-radius: 25px;
+            box-shadow: inset 6px 6px 12px #bec3c9, inset -6px -6px 12px #ffffff;
+            border: none;
+            outline: none;
+            padding: 12px 25px;
+            width: 100%;
+            color: #444;
+            transition: all 0.2s ease;
+        }
+        .neumorphic-button {
+            background: #777; 
+            border-radius: 25px;
+            box-shadow: 6px 6px 12px #bec3c9, -6px -6px 12px #ffffff;
+            color: white;
+            transition: all 0.2s ease;
+        }
+        .neumorphic-button:active {
+            box-shadow: inset 4px 4px 8px #555, inset -4px -4px 8px #999;
+            transform: scale(0.98);
+        }
 
-    .neu-circle {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #E0E5EC;
-      box-shadow: 7px 7px 14px #b8b9be, -7px -7px 14px #ffffff;
-    }
+        .ios-glass { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(25px) saturate(190%); }
+        .ios-widget { transition: transform 0.4s cubic-bezier(0.15, 0, 0.2, 1), box-shadow 0.4s ease; border-radius: 2.2rem; }
+        @media (max-width: 768px) { .ios-widget { border-radius: 1.5rem; } }
+        .ios-button { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; border: none; outline: none; }
+        .ios-button:active { transform: scale(0.96); opacity: 0.8; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-ios { animation: fadeIn 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+        
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
-    .neu-circle-blue {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #e3f2fd;
-      box-shadow: 5px 5px 10px rgba(187, 222, 251, 0.6), -5px -5px 10px rgba(255, 255, 255, 0.8);
-    }
+        .reg-teaser {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 4px 4px 4px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            margin-top: 16px;
+        }
+        .reg-teaser button {
+            background: #2563eb;
+            color: white;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 6px 16px;
+            border-radius: 999px;
+            transition: all 0.3s ease;
+            margin-left: 8px;
+        }
 
-    .neu-circle-green {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #f1f8e9;
-      box-shadow: 5px 5px 10px rgba(220, 237, 200, 0.6), -5px -5px 10px rgba(255, 255, 255, 0.8);
-    }
-
-    .neu-circle-red {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #ffebee;
-      box-shadow: 5px 5px 10px rgba(255, 205, 210, 0.6), -5px -5px 10px rgba(255, 255, 255, 0.8);
-    }
-
-    input, textarea, select {
-      background: #E0E5EC !important;
-      box-shadow: inset 2px 2px 5px #b8b9be, inset -3px -3px 7px #ffffff !important;
-      border: none !important;
-    }
-
-    .ios-blur {
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-    }
-
-    @page {
-      size: A4;
-      margin: 0;
-    }
-
-    @media print {
-      .no-print { display: none !important; }
-      body { background: white !important; margin: 0; padding: 0; }
-      #root { margin: 0; padding: 0; }
-      * { 
-        -webkit-print-color-adjust: exact !important; 
-        print-color-adjust: exact !important; 
-      }
-      .invoice-container {
-        box-shadow: none !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        width: 100% !important;
-        max-width: none !important;
-        height: 297mm !important;
-        page-break-after: avoid;
-        page-break-before: avoid;
-      }
-    }
-  </style>
+        .glassy-admin-btn {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            color: #1e293b;
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            padding: 10px 24px;
+            border-radius: 999px;
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.8);
+        }
+        .glassy-admin-btn:hover {
+            background: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+            transform: translateY(-2px);
+            color: #2563eb;
+        }
+        .glassy-admin-btn:active {
+            transform: translateY(0);
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .time-range-btn {
+            position: relative;
+            background: white !important;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        .time-range-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 14px;
+            height: 2.5px;
+            background: #add8e6; 
+            border-radius: 10px;
+        }
+    </style>
 <script type="importmap">
 {
   "imports": {
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react-router-dom": "https://esm.sh/react-router-dom@^7.12.0",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.35.0"
+    "react": "https://esm.sh/react@^18.2.0",
+    "react-dom": "https://esm.sh/react-dom@^18.2.0",
+    "react/": "https://esm.sh/react@^19.2.3/"
   }
 }
 </script>
 <link rel="stylesheet" href="/index.css">
 </head>
 <body>
-  <div id="root"></div>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
+
+        const TransactionType = { INCOME: 'INCOME', EXPENSE: 'EXPENSE', ALL: 'ALL' };
+        const UserRole = { ADMIN: 'ADMIN', USER: 'USER' };
+
+        // Logic for auto-adjusting legacy user data
+        const runMigration = () => {
+            const legacyUsersRaw = localStorage.getItem('WARRICK_USERS');
+            const globalUsersRaw = localStorage.getItem('GLOBAL_WARRICK_USERS');
+            
+            if (legacyUsersRaw) {
+                const legacyUsers = JSON.parse(legacyUsersRaw);
+                const globalUsers = globalUsersRaw ? JSON.parse(globalUsersRaw) : [];
+                const mergedUsers = [...globalUsers];
+                legacyUsers.forEach(lUser => {
+                    if (!mergedUsers.some(gUser => gUser.email === lUser.email)) {
+                        mergedUsers.push(lUser);
+                    }
+                });
+                localStorage.setItem('GLOBAL_WARRICK_USERS', JSON.stringify(mergedUsers));
+            }
+
+            // Sync legacy transactions to global context
+            Object.keys(localStorage).forEach(key => {
+                if (key.startsWith('TX_') && !key.startsWith('GLOBAL_TX_')) {
+                    const legacyData = localStorage.getItem(key);
+                    const globalKey = 'GLOBAL_' + key;
+                    const existingGlobalData = localStorage.getItem(globalKey);
+                    if (!existingGlobalData) {
+                        localStorage.setItem(globalKey, legacyData);
+                    } else {
+                        const lTxs = JSON.parse(legacyData);
+                        const gTxs = JSON.parse(existingGlobalData);
+                        const combined = Array.from(new Map([...lTxs, ...gTxs].map(tx => [tx.id, tx])).values());
+                        localStorage.setItem(globalKey, JSON.stringify(combined));
+                    }
+                }
+            });
+        };
+
+        const CloudSync = {
+            async getAllUsers() {
+                return JSON.parse(localStorage.getItem('GLOBAL_WARRICK_USERS') || '[]');
+            },
+            async saveUser(user) {
+                const users = await this.getAllUsers();
+                if (!users.some(u => u.email === user.email)) {
+                    users.push(user);
+                    localStorage.setItem('GLOBAL_WARRICK_USERS', JSON.stringify(users));
+                }
+                return user;
+            },
+            async getTransactions(userId) {
+                const data = localStorage.getItem(`GLOBAL_TX_${userId}`);
+                return JSON.parse(data || '[]');
+            },
+            async syncTransactions(userId, txs) {
+                localStorage.setItem(`GLOBAL_TX_${userId}`, JSON.stringify(txs));
+                return true;
+            }
+        };
+
+        const StatCard = ({ label, amount, type, currencySymbol }) => {
+            const getStyle = () => {
+                switch (type) {
+                    case 'income': return 'bg-green-100/60 text-emerald-600 border border-white';
+                    case 'expense': return 'bg-red-100/60 text-rose-600 border border-white';
+                    case 'balance': return 'bg-blue-100/60 text-blue-700 border border-white';
+                    default: return 'bg-white text-slate-800 border border-white';
+                }
+            };
+            return (
+                <div className={`ios-widget p-6 md:p-7 ios-glass ${getStyle()} flex flex-col justify-between h-36 md:h-40 shadow-2xl animate-ios`}>
+                    <p className={`text-[10px] md:text-[11px] font-black uppercase tracking-widest ${type === 'balance' ? 'text-blue-500' : 'text-slate-400'}`}>{label}</p>
+                    <h2 className="text-2xl md:text-3xl font-extrabold tabular-nums tracking-tighter leading-none">
+                        <span className="text-lg md:text-xl mr-1 font-medium opacity-70">{currencySymbol}</span>
+                        {amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </h2>
+                </div>
+            );
+        };
+
+        const Logo = ({ className = "" }) => (
+            <div className={`brand-container ${className}`}>
+                <h1 className="text-4xl md:text-5xl brand-text">
+                    WARRICK<span className="brand-dot">.</span>
+                </h1>
+                <div className="brand-underline"></div>
+                <div className="powered-tag">POWERED BY ARVIN</div>
+            </div>
+        );
+
+        const App = () => {
+            const [view, setView] = useState('signin');
+            const [currentUser, setCurrentUser] = useState(null);
+            const [transactions, setTransactions] = useState([]);
+            const [filterType, setFilterType] = useState(TransactionType.ALL);
+            const [timeRange, setTimeRange] = useState('ALL');
+            const [entryType, setEntryType] = useState(TransactionType.EXPENSE);
+            const [isLoading, setIsLoading] = useState(false);
+            const fileInputRef = useRef(null);
+
+            useEffect(() => {
+                runMigration(); // Always run migration for returning users
+                const session = JSON.parse(localStorage.getItem('W_SESSION'));
+                if (session) loadUserData(session);
+            }, []);
+
+            const loadUserData = async (user) => {
+                setIsLoading(true);
+                const txs = await CloudSync.getTransactions(user.username || user.email);
+                setTransactions(txs);
+                setCurrentUser(user);
+                setView('dashboard');
+                setIsLoading(false);
+            };
+
+            const handleSignin = async (e) => {
+                e.preventDefault();
+                setIsLoading(true);
+                const fd = new FormData(e.target);
+                const login = fd.get('login');
+                const pass = fd.get('pass');
+                const users = await CloudSync.getAllUsers();
+                const user = users.find(u => (u.email === login || u.mobile === login || u.username === login) && u.pass === pass);
+                if (user) {
+                    localStorage.setItem('W_SESSION', JSON.stringify(user));
+                    await loadUserData(user);
+                } else {
+                    alert('Invalid Credentials');
+                }
+                setIsLoading(false);
+            };
+
+            const handleSignup = async (e) => {
+                e.preventDefault();
+                setIsLoading(true);
+                const fd = new FormData(e.target);
+                const email = fd.get('email');
+                const newUser = {
+                    name: fd.get('name'),
+                    email: email,
+                    username: email,
+                    mobile: fd.get('mobile'),
+                    pass: fd.get('pass'),
+                    role: UserRole.USER
+                };
+                await CloudSync.saveUser(newUser);
+                localStorage.setItem('W_SESSION', JSON.stringify(newUser));
+                await loadUserData(newUser);
+                setIsLoading(false);
+            };
+
+            const filteredTxs = useMemo(() => {
+                let list = [...transactions];
+                if (filterType !== TransactionType.ALL) {
+                    list = list.filter(t => t.type === filterType);
+                }
+                if (timeRange !== 'ALL') {
+                    const now = new Date().getTime();
+                    const ranges = {
+                        '24H': 24 * 60 * 60 * 1000,
+                        '7D': 7 * 24 * 60 * 60 * 1000,
+                        '15D': 15 * 24 * 60 * 60 * 1000,
+                        '30D': 30 * 24 * 60 * 60 * 1000,
+                        '6M': 180 * 24 * 60 * 60 * 1000,
+                        '1Y': 365 * 24 * 60 * 60 * 1000,
+                    };
+                    const limit = now - ranges[timeRange];
+                    list = list.filter(t => new Date(t.date).getTime() >= limit);
+                }
+                return list;
+            }, [transactions, filterType, timeRange]);
+
+            const exportToPDF = () => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                doc.setFontSize(8);
+                doc.setTextColor(37, 99, 235);
+                doc.text("SCAN OR CLICK TO ACCESS LIVE WALLET: https://arvinhanif.github.io/warrickwallate.com/", 14, 10);
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(22);
+                doc.text("WARRICK WALLET REPORT", 14, 25);
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "normal");
+                doc.text(`User: ${currentUser.name} | Date: ${new Date().toLocaleString()}`, 14, 32);
+                const tableData = transactions.map(t => [new Date(t.date).toLocaleString(), t.description, t.type, t.amount.toFixed(2)]);
+                doc.autoTable({ startY: 40, head: [['Timestamp', 'Description', 'Type', 'Amount (BDT)']], body: tableData, headStyles: { fillColor: [30, 41, 59] } });
+                const signatureData = btoa(JSON.stringify(transactions));
+                doc.setFontSize(1); doc.setTextColor(255, 255, 255); doc.text(`WARRICK_DATA_V2:${signatureData}`, 14, 290);
+                doc.save(`Warrick_Wallet_Report_${currentUser.name.replace(/\s+/g, '_')}.pdf`);
+            };
+
+            const importFromPDF = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                setIsLoading(true);
+                const reader = new FileReader();
+                reader.onload = async function() {
+                    try {
+                        const typedarray = new Uint8Array(this.result);
+                        const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                        let fullText = "";
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const textContent = await page.getTextContent();
+                            fullText += textContent.items.map(item => item.str).join("");
+                        }
+                        const sig = fullText.includes("WARRICK_DATA_V2:") ? "WARRICK_DATA_V2:" : (fullText.includes("WARRICK_DATA:") ? "WARRICK_DATA:" : null);
+                        if (sig) {
+                            const rawData = fullText.split(sig)[1].trim().split(" ")[0];
+                            const importedTxs = JSON.parse(atob(rawData));
+                            const merged = [...importedTxs, ...transactions];
+                            const unique = Array.from(new Map(merged.map(item => [item.id, item])).values());
+                            unique.sort((a, b) => new Date(b.date) - new Date(a.date));
+                            setTransactions(unique);
+                            await CloudSync.syncTransactions(currentUser.username || currentUser.email, unique);
+                        }
+                    } catch (err) { alert("Sync Failed"); }
+                    setIsLoading(false);
+                };
+                reader.readAsArrayBuffer(file);
+            };
+
+            if (view !== 'dashboard') {
+                return (
+                    <div className="fixed inset-0 flex items-center justify-center p-6 bg-[#e0e5ec]">
+                        <div className="w-full max-w-[400px] animate-ios">
+                            <div className="text-center mb-10"><Logo /></div>
+                            <div className="neumorphic-card p-10 md:p-12">
+                                {view === 'signin' && (
+                                    <form onSubmit={handleSignin} className="space-y-6 text-center">
+                                        <input name="login" required placeholder="Email or Mobile" className="neumorphic-input font-medium" />
+                                        <input name="pass" type="password" required placeholder="Password" className="neumorphic-input font-medium" />
+                                        <button className="w-full py-4 neumorphic-button font-bold text-lg">Sign In</button>
+                                        <div className="flex flex-col items-center mt-6 pt-6 border-t border-slate-300">
+                                            <button type="button" onClick={() => setView('admin')} className="glassy-admin-btn mb-4">Admin Portal</button>
+                                            <div className="reg-teaser"><p className="text-xs font-bold text-slate-500">New to Warrick?</p><button type="button" onClick={() => setView('signup')}>Register</button></div>
+                                        </div>
+                                    </form>
+                                )}
+                                {view === 'admin' && (
+                                    <form onSubmit={(e) => { e.preventDefault(); if (e.target.id.value === 'arvin_hanif' && e.target.pw.value === 'arvin_hanif') { loadUserData({ name: 'Arvin Hanif', email: 'admin@warrick.io', role: UserRole.ADMIN, username: 'arvin_hanif' }); } }} className="space-y-6">
+                                        <input name="id" required placeholder="Admin ID" className="neumorphic-input font-medium" />
+                                        <input name="pw" type="password" required placeholder="Secret" className="neumorphic-input font-medium" />
+                                        <button className="w-full py-4 neumorphic-button font-bold text-lg">Authorize</button>
+                                        <div className="flex flex-col items-center mt-6 pt-6 border-t border-slate-300">
+                                            <div className="reg-teaser"><p className="text-xs font-bold text-slate-500">Mistake?</p><button type="button" onClick={() => setView('signin')}>Back to Login</button></div>
+                                        </div>
+                                    </form>
+                                )}
+                                {view === 'signup' && (
+                                    <form onSubmit={handleSignup} className="space-y-5">
+                                        <input name="name" required placeholder="Full Name" className="neumorphic-input" />
+                                        <input name="email" required type="email" placeholder="Email" className="neumorphic-input" />
+                                        <input name="mobile" required placeholder="Mobile" className="neumorphic-input" />
+                                        <input name="pass" type="password" required placeholder="Password" className="neumorphic-input" />
+                                        <button className="w-full py-4 neumorphic-button font-bold text-lg">Join Warrick</button>
+                                        <div className="flex flex-col items-center mt-6 pt-6 border-t border-slate-300">
+                                            <div className="reg-teaser"><p className="text-xs font-bold text-slate-500">Already a member?</p><button type="button" onClick={() => setView('signin')}>Login</button></div>
+                                        </div>
+                                    </form>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            const incTotal = transactions.filter(t => t.type === TransactionType.INCOME).reduce((a, b) => a + b.amount, 0);
+            const expTotal = transactions.filter(t => t.type === TransactionType.EXPENSE).reduce((a, b) => a + b.amount, 0);
+
+            return (
+                <div className="w-full min-h-screen py-6 px-4 md:px-10 lg:px-20">
+                    <header className="max-w-[1200px] mx-auto mb-8 text-center md:text-left">
+                        <Logo className="header-logo" />
+                        <div className="mt-10 flex justify-center">
+                            <div className="ios-glass p-1.5 rounded-full border border-white shadow-xl flex items-center gap-1">
+                                {['ALL', 'INCOME', 'EXPENSE'].map(f => (
+                                    <button key={f} onClick={() => setFilterType(TransactionType[f])} className={`px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${filterType === TransactionType[f] ? 'bg-white text-blue-600 shadow-md' : 'text-slate-500'}`}>{f}</button>
+                                ))}
+                            </div>
+                        </div>
+                    </header>
+                    <main className="max-w-[1200px] mx-auto space-y-10 pb-12">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <StatCard label="Net Balance" amount={incTotal - expTotal} type="balance" currencySymbol="৳" />
+                            <StatCard label="Total Income" amount={incTotal} type="income" currencySymbol="৳" />
+                            <StatCard label="Total Expenses" amount={expTotal} type="expense" currencySymbol="৳" />
+                        </div>
+                        <div className={`ios-glass p-6 md:p-10 rounded-[2rem] border border-white shadow-2xl transition-all duration-500 ${entryType === TransactionType.EXPENSE ? 'bg-red-100/60' : 'bg-green-100/60'}`}>
+                             <div className="flex flex-col md:flex-row md:justify-between items-center gap-4 mb-8">
+                                <h3 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">Sync New Record</h3>
+                                <div className="p-1 bg-slate-200/50 rounded-2xl flex border border-white">
+                                    <button onClick={() => setEntryType(TransactionType.EXPENSE)} className={`px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${entryType === TransactionType.EXPENSE ? 'bg-white text-rose-600 shadow-md' : 'text-slate-400'}`}>Expense</button>
+                                    <button onClick={() => setEntryType(TransactionType.INCOME)} className={`px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${entryType === TransactionType.INCOME ? 'bg-white text-emerald-600 shadow-md' : 'text-slate-400'}`}>Income</button>
+                                </div>
+                             </div>
+                             <form onSubmit={async (e) => {
+                                e.preventDefault();
+                                const fd = new FormData(e.target);
+                                const amt = parseFloat(fd.get('amt'));
+                                if(!amt) return;
+                                const newTx = { id: Date.now().toString(), description: fd.get('desc'), amount: amt, type: entryType, date: new Date().toISOString() };
+                                const updated = [newTx, ...transactions];
+                                setTransactions(updated);
+                                await CloudSync.syncTransactions(currentUser.username || currentUser.email, updated);
+                                e.target.reset();
+                             }} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <input name="desc" required placeholder="Reason / Category..." className="px-5 py-4 rounded-2xl bg-white border border-slate-100 outline-none font-bold" />
+                                <input name="amt" type="number" step="0.01" required placeholder="Amount (৳)" className="px-5 py-4 rounded-2xl bg-white border border-slate-100 outline-none font-bold" />
+                                <button className={`py-4 text-white font-black rounded-2xl uppercase tracking-widest text-[10px] shadow-xl ${entryType === TransactionType.INCOME ? 'bg-emerald-600' : 'bg-rose-600'}`}>Update Ledger</button>
+                             </form>
+                        </div>
+                        <div className="ios-glass rounded-[2rem] border border-white shadow-2xl overflow-hidden mb-12">
+                            <div className="p-6 md:p-8 border-b border-white/40 bg-white/30">
+                                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                                    <h3 className="text-lg md:text-xl font-extrabold uppercase tracking-tighter text-slate-800">Activity Logs</h3>
+                                    <div className="flex items-center p-1 bg-slate-200/30 rounded-2xl border border-white/50 overflow-x-auto scrollbar-hide max-w-full">
+                                        <div className="flex flex-row flex-nowrap gap-1.5 min-w-max">
+                                            {[
+                                                {id: 'ALL', label: 'ALL'},
+                                                {id: '24H', label: '24H'},
+                                                {id: '7D', label: '7D'},
+                                                {id: '15D', label: '15D'},
+                                                {id: '30D', label: '30D'},
+                                                {id: '6M', label: '6M'},
+                                                {id: '1Y', label: '1Y'}
+                                            ].map(range => (
+                                                <button 
+                                                    key={range.id} 
+                                                    onClick={() => setTimeRange(range.id)} 
+                                                    className={`time-range-btn px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-tight flex-shrink-0 ${timeRange === range.id ? 'active text-blue-600 scale-105 z-10' : 'text-slate-400 hover:text-slate-600'}`}
+                                                >
+                                                    {range.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="p-3 md:p-6 space-y-2 max-h-[500px] overflow-y-auto">
+                                {filteredTxs.length === 0 ? (
+                                    <div className="py-20 text-center opacity-50 font-black uppercase tracking-widest text-xs">No entries found</div>
+                                ) : (
+                                    filteredTxs.map(t => (
+                                        <div key={t.id} className={`flex justify-between items-center p-4 rounded-2xl border border-white group animate-ios ${t.type === TransactionType.INCOME ? 'bg-green-100/60' : 'bg-red-100/60'}`}>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white shadow-inner font-black text-xs">
+                                                    {t.type === TransactionType.INCOME ? '+' : '-'}
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-slate-800 text-sm">{t.description}</h4>
+                                                    <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest">{new Date(t.date).toLocaleString()}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <p className={`text-base font-black tabular-nums tracking-tighter ${t.type === TransactionType.INCOME ? 'text-green-700' : 'text-red-700'}`}>৳{t.amount.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+                                                {currentUser?.role === UserRole.ADMIN && (
+                                                    <button onClick={async () => {
+                                                        const updated = transactions.filter(tx => tx.id !== t.id);
+                                                        setTransactions(updated);
+                                                        await CloudSync.syncTransactions(currentUser.username || currentUser.email, updated);
+                                                    }} className="text-slate-400 hover:text-rose-600 transition-colors font-bold p-2">✕</button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="max-w-[1200px] mx-auto px-4 mt-12 pb-8">
+                            <div className="flex flex-row flex-nowrap justify-center md:justify-end gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                                <button onClick={exportToPDF} className="whitespace-nowrap px-6 py-3 bg-white rounded-2xl ios-button text-blue-600 text-[11px] font-black uppercase tracking-widest border border-blue-100 flex-shrink-0">EXPORT</button>
+                                <button onClick={() => fileInputRef.current.click()} className="whitespace-nowrap px-6 py-3 bg-white rounded-2xl ios-button text-emerald-600 text-[11px] font-black uppercase tracking-widest border border-emerald-100 flex-shrink-0">IMPORT</button>
+                                <input type="file" ref={fileInputRef} onChange={importFromPDF} accept=".pdf" className="hidden" />
+                                <button onClick={() => {localStorage.removeItem('W_SESSION'); setView('signin');}} className="whitespace-nowrap px-6 py-3 bg-white rounded-2xl ios-button text-rose-500 font-black text-[11px] uppercase tracking-widest border border-rose-100 flex-shrink-0">LOGOUT</button>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 <script type="module" src="/index.tsx"></script>
 </body>
 </html>
