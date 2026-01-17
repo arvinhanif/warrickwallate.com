@@ -653,21 +653,146 @@
 
             const exportToPDF = () => {
                 const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                doc.setFontSize(8);
-                doc.setTextColor(37, 99, 235);
-                doc.text("SCAN OR CLICK TO ACCESS LIVE WALLET: https://arvinhanif.github.io/warrickwallate.com/", 14, 10);
+                const doc = new jsPDF('p', 'mm', 'a4');
+                const pageWidth = doc.internal.pageSize.getWidth();
+                
+                // Colors from professional invoice template
+                const darkColor = [30, 41, 59]; // Slate 800-ish
+                const accentColor = [251, 191, 36]; // Amber 400
+                const lightGray = [241, 245, 249]; // Slate 100
+                const greenColor = [16, 185, 129]; // Emerald 500
+                const redColor = [225, 29, 72]; // Rose 600
+                
+                // Header Area
+                doc.setFillColor(...darkColor);
+                doc.rect(0, 0, pageWidth, 50, 'F');
+                
+                // App Brand Name (Logo)
+                doc.setTextColor(255, 255, 255);
                 doc.setFont("helvetica", "bold");
-                doc.setTextColor(0, 0, 0);
-                doc.setFontSize(22);
-                doc.text("WARRICK WALLET REPORT", 14, 25);
-                doc.setFontSize(10);
+                doc.setFontSize(28);
+                doc.text("WARRICK.", 15, 25);
+                
+                doc.setFontSize(8);
                 doc.setFont("helvetica", "normal");
-                doc.text(`User: ${currentUser.name} | Date: ${new Date().toLocaleString()}`, 14, 32);
-                const tableData = transactions.map(t => [new Date(t.date).toLocaleString(), t.description, t.type, t.amount.toFixed(2)]);
-                doc.autoTable({ startY: 40, head: [['Timestamp', 'Description', 'Type', 'Amount (BDT)']], body: tableData, headStyles: { fillColor: [30, 41, 59] } });
+                doc.text("POWERED BY ARVIN", 15, 30);
+                
+                // Contact Info (Right side)
+                doc.setFontSize(9);
+                doc.text(`User: ${currentUser.name}`, pageWidth - 15, 20, { align: 'right' });
+                doc.text(`Email: ${currentUser.email || 'N/A'}`, pageWidth - 15, 25, { align: 'right' });
+                doc.text(`Date: ${new Date().toLocaleDateString()}`, pageWidth - 15, 30, { align: 'right' });
+                
+                // Curved Wave Effect (Mockup curve)
+                doc.setFillColor(71, 85, 105); // Lighter slate
+                doc.rect(0, 50, pageWidth, 5, 'F');
+                
+                // Invoice Title
+                doc.setTextColor(...darkColor);
+                doc.setFontSize(32);
+                doc.setFont("helvetica", "bold");
+                doc.text("INVOICE", pageWidth - 15, 75, { align: 'right' });
+                
+                // Billing Info
+                doc.setFontSize(10);
+                doc.text("TO:", 15, 85);
+                doc.setFont("helvetica", "bold");
+                doc.text(currentUser.name.toUpperCase(), 15, 90);
+                doc.setFont("helvetica", "normal");
+                doc.setTextColor(100, 116, 139);
+                doc.text(`Project: Personal Ledger Sync`, 15, 95);
+                doc.text(`Mobile: ${currentUser.mobile || 'N/A'}`, 15, 100);
+                
+                // Table
+                const tableData = transactions.map(t => [
+                    new Date(t.date).toLocaleDateString(),
+                    t.description,
+                    t.method || 'CASH',
+                    t.type,
+                    `৳${t.amount.toFixed(2)}`
+                ]);
+                
+                doc.autoTable({
+                    startY: 110,
+                    head: [['DATE', 'ITEM DESCRIPTION', 'METHOD', 'TYPE', 'TOTAL']],
+                    body: tableData,
+                    theme: 'plain',
+                    headStyles: {
+                        fillColor: accentColor,
+                        textColor: [0, 0, 0],
+                        fontStyle: 'bold',
+                        fontSize: 10,
+                        halign: 'center'
+                    },
+                    bodyStyles: {
+                        fontSize: 9,
+                        textColor: [51, 65, 85],
+                        halign: 'center'
+                    },
+                    columnStyles: {
+                        1: { halign: 'left', fontStyle: 'bold' } // Item description
+                    },
+                    didParseCell: (data) => {
+                        // Apply color specifically to the TYPE column (index 3)
+                        if (data.section === 'body' && data.column.index === 3) {
+                            if (data.cell.raw === TransactionType.INCOME) {
+                                data.cell.styles.textColor = greenColor;
+                                data.cell.styles.fontStyle = 'bold';
+                            } else if (data.cell.raw === TransactionType.EXPENSE) {
+                                data.cell.styles.textColor = redColor;
+                                data.cell.styles.fontStyle = 'bold';
+                            }
+                        }
+                    },
+                    didDrawPage: (data) => {
+                        // Table line styling
+                        doc.setDrawColor(226, 232, 240);
+                        doc.line(15, data.cursor.y, pageWidth - 15, data.cursor.y);
+                    }
+                });
+                
+                const finalY = doc.lastAutoTable.finalY || 150;
+                
+                // Totals Area
+                const incTotal = transactions.filter(t => t.type === TransactionType.INCOME).reduce((a, b) => a + b.amount, 0);
+                const expTotal = transactions.filter(t => t.type === TransactionType.EXPENSE).reduce((a, b) => a + b.amount, 0);
+                
+                doc.setFontSize(10);
+                doc.setTextColor(100, 116, 139);
+                doc.text("Total Income:", pageWidth - 60, finalY + 15);
+                doc.setTextColor(...greenColor);
+                doc.text(`৳${incTotal.toFixed(2)}`, pageWidth - 15, finalY + 15, { align: 'right' });
+                
+                doc.setTextColor(100, 116, 139);
+                doc.text("Total Expenses:", pageWidth - 60, finalY + 22);
+                doc.setTextColor(...redColor);
+                doc.text(`৳${expTotal.toFixed(2)}`, pageWidth - 15, finalY + 22, { align: 'right' });
+                
+                doc.setFillColor(...accentColor);
+                doc.rect(pageWidth - 75, finalY + 28, 60, 12, 'F');
+                doc.setTextColor(0, 0, 0);
+                doc.setFont("helvetica", "bold");
+                doc.text("GRAND TOTAL:", pageWidth - 70, finalY + 36);
+                doc.text(`৳${(incTotal - expTotal).toFixed(2)}`, pageWidth - 20, finalY + 36, { align: 'right' });
+                
+                // Footer
+                doc.setTextColor(100, 116, 139);
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(12);
+                doc.text("Thank you for your business!", 15, 275);
+                doc.setFontSize(8);
+                doc.setFont("helvetica", "normal");
+                doc.text("This is a computer generated document from Warrick Wallet System.", 15, 280);
+                
+                // Signature Area
+                doc.text("Authorized Signature", pageWidth - 50, 275);
+                doc.line(pageWidth - 70, 270, pageWidth - 15, 270);
+                
+                // Embed Hidden Data for sync
                 const signatureData = btoa(JSON.stringify(transactions));
-                doc.setFontSize(1); doc.setTextColor(255, 255, 255); doc.text(`WARRICK_DATA_V2:${signatureData}`, 14, 290);
+                doc.setFontSize(1); doc.setTextColor(255, 255, 255); 
+                doc.text(`WARRICK_DATA_V2:${signatureData}`, 15, 290);
+                
                 doc.save(`Warrick_Wallet_Report_${currentUser.name.replace(/\s+/g, '_')}.pdf`);
             };
 
