@@ -356,9 +356,11 @@
         /**
          * GitHub Migration & Data Consistency Logic
          * Ensures that users coming from previous versions/domains keep their data.
+         * SPECIAL FIX: All existing transactions without a method will be assigned to 'CASH' 
+         * so the balance cards (Cash, bKash, etc.) reflect the correct historical data.
          */
         const runMigration = () => {
-            // Migrate legacy users
+            // 1. Migrate legacy users
             const legacyUsersRaw = localStorage.getItem('WARRICK_USERS');
             const globalUsersRaw = localStorage.getItem('GLOBAL_WARRICK_USERS');
             
@@ -374,24 +376,43 @@
                 localStorage.setItem('GLOBAL_WARRICK_USERS', JSON.stringify(mergedUsers));
             }
 
-            // Migrate legacy transaction stores to global unified prefix
+            // 2. Migrate legacy transaction stores to global unified prefix
+            // AND adjust historical transactions to be 'CASH' by default if no method exists.
             Object.keys(localStorage).forEach(key => {
-                if (key.startsWith('TX_') && !key.startsWith('GLOBAL_TX_')) {
-                    const legacyData = localStorage.getItem(key);
-                    const globalKey = 'GLOBAL_' + key;
-                    const existingGlobalData = localStorage.getItem(globalKey);
-                    
-                    if (!existingGlobalData) {
-                        localStorage.setItem(globalKey, legacyData);
-                    } else {
-                        try {
-                            const lTxs = JSON.parse(legacyData);
-                            const gTxs = JSON.parse(existingGlobalData);
-                            // Merge and de-duplicate by ID
-                            const combined = Array.from(new Map([...lTxs, ...gTxs].map(tx => [tx.id, tx])).values());
-                            localStorage.setItem(globalKey, JSON.stringify(combined));
-                        } catch(e) { console.error("Migration error", e); }
-                    }
+                if ((key.startsWith('TX_') && !key.startsWith('GLOBAL_TX_')) || key.startsWith('GLOBAL_TX_')) {
+                    const data = localStorage.getItem(key);
+                    if (!data) return;
+
+                    try {
+                        let txs = JSON.parse(data);
+                        let changed = false;
+
+                        // DATA ADJUSTMENT: If transaction has no method, default it to 'CASH'
+                        txs = txs.map(tx => {
+                            if (!tx.method) {
+                                changed = true;
+                                return { ...tx, method: PaymentMethod.CASH };
+                            }
+                            return tx;
+                        });
+
+                        if (changed) {
+                            localStorage.setItem(key, JSON.stringify(txs));
+                        }
+
+                        // If it was a legacy key, move it to the GLOBAL_ key
+                        if (key.startsWith('TX_')) {
+                            const globalKey = 'GLOBAL_' + key;
+                            const existingGlobalData = localStorage.getItem(globalKey);
+                            if (!existingGlobalData) {
+                                localStorage.setItem(globalKey, JSON.stringify(txs));
+                            } else {
+                                const gTxs = JSON.parse(existingGlobalData);
+                                const combined = Array.from(new Map([...txs, ...gTxs].map(tx => [tx.id, tx])).values());
+                                localStorage.setItem(globalKey, JSON.stringify(combined));
+                            }
+                        }
+                    } catch(e) { console.error("Migration error", e); }
                 }
             });
         };
@@ -442,6 +463,7 @@
                 const results = { [PaymentMethod.CASH]: 0, [PaymentMethod.BKASH]: 0, [PaymentMethod.NAGAD]: 0, [PaymentMethod.BANK]: 0 };
                 transactions.forEach(t => {
                     const val = (t.type === TransactionType.INCOME) ? t.amount : -t.amount;
+                    // Note: Defaulted to CASH in migration if missing
                     if (results.hasOwnProperty(t.method)) results[t.method] += val;
                 });
                 return results;
@@ -520,7 +542,7 @@
             const fileInputRef = useRef(null);
 
             useEffect(() => {
-                // Run data migration immediately on mount
+                // Run migration logic including historical CASH auto-adjustment
                 runMigration();
                 const session = JSON.parse(localStorage.getItem('W_SESSION'));
                 if (session) loadUserData(session);
